@@ -34,3 +34,19 @@ func TestUsage(m *testing.T) {
 		m.FailNow()
 	}
 }
+
+func TestCustomDelemiter(m *testing.T) {
+	flexMap := make(flexmap.FlexMap)
+	err := json.Unmarshal([]byte(jsonTestStruct), &flexMap)
+	if err != nil {
+		panic(err)
+	}
+	flexmap.QDelemiter = "/"
+	if value, ok := flexMap.GetByQual("a/b/0/c"); ok {
+		if value.(float64) != 3 {
+			m.FailNow()
+		}
+	} else {
+		m.FailNow()
+	}
+}

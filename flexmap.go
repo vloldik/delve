@@ -5,20 +5,27 @@ import (
 	"strings"
 )
 
-// Delemiter of query: "."
-const QDelemiter = "."
+// QDelemiter is used to separate nested keys in qualified paths
+var QDelemiter = "."
 
+// FlexMap is a map type that can store values of any type
 type FlexMap map[string]any
+
+// FlexList is a slice type that can store values of any type
 type FlexList []any
+
+// IAnyGetter defines an interface for getting values by key
 type IAnyGetter interface {
 	Get(k string) (any, bool)
 }
 
+// Get retrieves a value from FlexMap by key
 func (fm FlexMap) Get(key string) (any, bool) {
 	value, ok := fm[key]
 	return value, ok
 }
 
+// Get retrieves a value from FlexList by index (passed as string)
 func (fl FlexList) Get(uncasted string) (any, bool) {
 	key, err := strconv.Atoi(uncasted)
 	if err != nil {
@@ -30,6 +37,7 @@ func (fl FlexList) Get(uncasted string) (any, bool) {
 	return fl[key], true
 }
 
+// GetByQual retrieves a nested value using a qualified path (e.g. "a.b.c")
 func (fm FlexMap) GetByQual(qual string) (any, bool) {
 	parts := strings.Split(qual, QDelemiter)
 	var currentGetter IAnyGetter = fm
@@ -46,6 +54,7 @@ func (fm FlexMap) GetByQual(qual string) (any, bool) {
 	return nil, false
 }
 
+// GetInnerGetter retrieves nested FlexMap or FlexList values for further access
 func GetInnerGetter(key string, from IAnyGetter) (IAnyGetter, bool) {
 	result, ok := from.Get(key)
 	if !ok {
@@ -61,12 +70,14 @@ func GetInnerGetter(key string, from IAnyGetter) (IAnyGetter, bool) {
 	}
 }
 
-func GetTyped[T any](key string, from IAnyGetter, allowNil_ ...bool) (val T, ok bool) {
+// GetTypedByQual retrieves a nested value and attempts to cast it to the specified type T
+// Optional allowNil parameter controls whether nil values are considered valid
+func GetTypedByQual[T any](qual string, from FlexMap, allowNil_ ...bool) (val T, ok bool) {
 	var allowNil bool
 	if len(allowNil_) > 0 {
 		allowNil = allowNil_[0]
 	}
-	untyped, ok := from.Get(key)
+	untyped, ok := from.GetByQual(qual)
 	if !ok {
 		return
 	}
