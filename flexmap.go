@@ -16,7 +16,7 @@ type FlexList []any
 
 // IAnyGetter defines an interface for getting values by key
 type IAnyGetter interface {
-	Get(k string) (any, bool)
+	Get(string) (any, bool)
 }
 
 // Get retrieves a value from FlexMap by key
@@ -85,8 +85,8 @@ func GetTypedByQual[T any](qual string, from FlexMap, allowNil_ ...bool) (val T,
 	if len(allowNil_) > 0 {
 		allowNil = allowNil_[0]
 	}
-	untyped, ok := from.GetByQual(qual)
-	if !ok {
+	untyped, getOK := from.GetByQual(qual)
+	if !getOK {
 		return
 	}
 	switch typed := untyped.(type) {
