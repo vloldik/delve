@@ -54,6 +54,14 @@ func (fm FlexMap) GetByQual(qual string) (any, bool) {
 	return nil, false
 }
 
+// Returns value by qual or panics
+func (fm FlexMap) MustGetByQual(qual string) any {
+	if val, ok := fm.GetByQual(qual); ok {
+		return val
+	}
+	panic("could not get by qual " + qual)
+}
+
 // GetInnerGetter retrieves nested FlexMap or FlexList values for further access
 func GetInnerGetter(key string, from IAnyGetter) (IAnyGetter, bool) {
 	result, ok := from.Get(key)
@@ -90,4 +98,12 @@ func GetTypedByQual[T any](qual string, from FlexMap, allowNil_ ...bool) (val T,
 	default:
 		return
 	}
+}
+
+// Returns typed value by qual or panics
+func MustGetTypedByQual[T any](qual string, from FlexMap, allowNil_ ...bool) T {
+	if val, ok := GetTypedByQual[T](qual, from, allowNil_...); ok {
+		return val
+	}
+	panic("could not get by qual: " + qual)
 }
