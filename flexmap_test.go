@@ -26,11 +26,7 @@ func TestUsage(m *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	if value, ok := flexMap.GetByQual("a.b.0.c"); ok {
-		if value.(float64) != 3 {
-			m.FailNow()
-		}
-	} else {
+	if flexMap.Int("a.b.0.c") != 3 {
 		m.FailNow()
 	}
 }
