@@ -8,9 +8,9 @@ import (
 )
 
 func TestQualCompile(t *testing.T) {
-	testString := `a.b.c\.c\\.d`
+	testString := `a\.b.c\.c\\.d`
 	qual := flexmap.CompileQual(testString)
-	compiled := flexmap.CompiledQual{"a", "b", "c.c\\", "d"}
+	compiled := flexmap.CompiledQual{"a.b", "c.c\\", "d"}
 
 	if !slices.Equal(qual, compiled) {
 		t.Fatalf("Slice %v is not equal %v", qual, compiled)

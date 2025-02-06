@@ -1,7 +1,17 @@
 package flexmap
 
+import "strings"
+
 // FlexQual is compiled path
 type CompiledQual []string
+
+func (c CompiledQual) String() string {
+	escaped := []string{}
+	for _, part := range c {
+		escaped = append(escaped, strings.ReplaceAll(part, string(DefaultDelimiter), "\\"+string(DefaultDelimiter)))
+	}
+	return strings.Join(escaped, string(DefaultDelimiter))
+}
 
 func CompileQual(qual string, _delimiter ...rune) CompiledQual {
 	delimiter := DefaultDelimiter
@@ -34,5 +44,5 @@ func getNextQualPart(delimiter rune, qual string) (part string, rest string) {
 		}
 		qualPart += string(r)
 	}
-	return qual, ""
+	return qualPart, ""
 }

@@ -54,38 +54,14 @@ func (fl getterList) Get(uncasted string) (any, bool) {
 	return fl[key], true
 }
 
-func (fm *FlexMap) getDelemiterIndex(qual string) (string, int) {
-	var prev rune
-	for i, r := range qual {
-		if prev == '\\' && r == fm.delimiter {
-			qual = qual[0:i-1] + qual[i:]
-			prev = r
-			continue
-		}
-		prev = r
-		if r == fm.delimiter {
-			return qual, i
-		}
-	}
-	return qual, -1
-}
-
-func (fm *FlexMap) getNextPart(qual string) (string, string) {
-	qual, i := fm.getDelemiterIndex(qual)
-	if i == -1 {
-		return qual, ""
-	}
-	return qual[:i], qual[i+1:]
-}
-
-// GetByQual retrieves a nested value using a qualified path (e.g. "a.b.c")
-func (fm FlexMap) GetByQual(qual string) (any, bool) {
+// GetByQual retrieves a nested value using a compiled qualifier
+func (fm FlexMap) GetByQual(qual CompiledQual) (any, bool) {
 	var currentGetter IGetter = fm.source
 	if currentGetter == nil {
 		return nil, false
 	}
-	for part, rest := fm.getNextPart(qual); part != ""; part, rest = fm.getNextPart(rest) {
-		if rest == "" {
+	for i, part := range qual {
+		if i == len(qual)-1 {
 			return currentGetter.Get(part)
 		}
 		if value, ok := getInnerGetter(part, currentGetter); ok {
@@ -98,11 +74,11 @@ func (fm FlexMap) GetByQual(qual string) (any, bool) {
 }
 
 // Returns value by qual or panics
-func (fm FlexMap) MustGetByQual(qual string) any {
+func (fm FlexMap) MustGetByQual(qual CompiledQual) any {
 	if val, ok := fm.GetByQual(qual); ok {
 		return val
 	}
-	panic("could not get by qual " + qual)
+	panic("could not get by qual " + qual.String())
 }
 
 // getInnerGetter retrieves nested FlexMap or FlexList values for further access

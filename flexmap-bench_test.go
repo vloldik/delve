@@ -21,10 +21,11 @@ func BenchmarkDirect(b *testing.B) {
 // 45 ns/op
 func BenchmarkFlexMap(b *testing.B) {
 	fm := flexmap.FromMap(map[string]any{"test": map[string]any{"test": 123}})
+	qual := flexmap.CompileQual("test.test")
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = fm.Int("test.test")
+		_ = fm.Int(qual)
 	}
 }
 
@@ -33,11 +34,12 @@ func BenchmarkFlexStringLen(b *testing.B) {
 	for n := 0; n < 10; n++ {
 		str := baseStr + strings.Repeat("1", n*11+1) // Ensure unique strings
 		fm := flexmap.FromMap(map[string]any{str: map[string]any{"test": 123}})
+		name := str + ".test"
+		qual := flexmap.CompileQual(name)
 
 		b.Run(fmt.Sprintf("FlexStrLen-%d", len(str)), func(b *testing.B) { // Name benchmarks by string length
-			name := str + ".test"
 			for i := 0; i < b.N; i++ {
-				_ = fm.Float64(name)
+				_ = fm.Float64(qual)
 			}
 		})
 		baseStr = str
@@ -57,10 +59,11 @@ func BenchmarkFlexStringDepth(b *testing.B) {
 			accessString += "level" + fmt.Sprintf("%d", i) + "."
 		}
 		accessString += "test"
+		qual := flexmap.CompileQual(accessString)
 
 		b.Run(fmt.Sprintf("FlexStrDepth-%d", depth), func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
-				_ = fm.Float64(accessString)
+				_ = fm.Float64(qual)
 			}
 		})
 	}
@@ -69,9 +72,9 @@ func BenchmarkFlexStringDepth(b *testing.B) {
 // 48 ns/op
 func BenchmarkGetTyped(b *testing.B) {
 	fm := flexmap.FromMap(map[string]any{"lebel1": map[string]any{"test1": map[string]any{"inner": []string{"test"}}}})
-
+	qual := flexmap.CompileQual("lebel1.test1.inner.test")
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = fm.StringSlice("lebel1.test1.inner.test")
+		_ = fm.StringSlice(qual)
 	}
 }

@@ -28,7 +28,7 @@ func TestUsage(m *testing.T) {
 		panic(err)
 	}
 	flexMap := flexmap.FromMap(mMap)
-	if flexMap.Int("a.b.0.c") != 3 {
+	if flexMap.Int(flexmap.CompileQual("a.b.0.c")) != 3 {
 		m.FailNow()
 	}
 }
@@ -40,7 +40,8 @@ func TestScreening(m *testing.T) {
 		panic(err)
 	}
 	flexMap := flexmap.FromMap(mMap)
-	if a := flexMap.Int("b.c.a\\.b"); a != 321 {
+
+	if a := flexMap.Int(flexmap.CompileQual("b.c.a\\.b")); a != 321 {
 		m.Fatalf("%d is not eq 321", a)
 	}
 }
@@ -52,7 +53,7 @@ func TestCustomDelemiter(m *testing.T) {
 		panic(err)
 	}
 	flexMap := flexmap.FromMap(mMap, '/')
-	if value, ok := flexMap.GetByQual("a/b/0/c"); ok {
+	if value, ok := flexMap.GetByQual(flexmap.CompileQual("a/b/0/c", '/')); ok {
 		if value.(float64) != 3 {
 			m.FailNow()
 		}
@@ -68,12 +69,12 @@ func TestInnerGet(t *testing.T) {
 		panic(err)
 	}
 	flexMap := flexmap.FromMap(mMap)
-	inner := flexMap.FlexMap("a.b")
+	inner := flexMap.FlexMap(flexmap.CompileQual("a.b"))
 	if inner == nil {
 		t.Fatal("Inner map is nil")
 		return
 	}
-	if inner.Int16("0.c") != 3 {
+	if inner.Int16(flexmap.CompileQual("0.c")) != 3 {
 		t.Fatal("Inner int is not equal 3")
 	}
 }
