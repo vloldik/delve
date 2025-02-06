@@ -52,7 +52,7 @@ func TestCustomDelemiter(m *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	nav := delve.FromMap(mMap, '/')
+	nav := delve.FromMap(mMap)
 	if value, ok := nav.GetByQual(delve.Qual("a/b/0/c", '/')); ok {
 		if value.(float64) != 3 {
 			m.FailNow()

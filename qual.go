@@ -2,6 +2,9 @@ package delve
 
 import "strings"
 
+// Qdelimiter is used to separate nested keys in qualified paths
+const DefaultDelimiter = '.'
+
 // FlexQual is compiled path
 type CompiledQual []string
 
@@ -18,6 +21,9 @@ func Qual(qual string, _delimiter ...rune) CompiledQual {
 	parts := make(CompiledQual, 0)
 	if len(_delimiter) > 0 {
 		delimiter = _delimiter[0]
+	}
+	if delimiter == '\\' {
+		panic(`Delimiter can not be a "\""`)
 	}
 	for part, rest := getNextQualPart(delimiter, qual); ; part, rest = getNextQualPart(delimiter, rest) {
 		parts = append(parts, part)

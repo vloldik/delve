@@ -4,28 +4,20 @@ import (
 	"strconv"
 )
 
-// Qdelimiter is used to separate nested keys in qualified paths
-const DefaultDelimiter = '.'
-
-func New(source IGetter, _delimiter ...rune) *Navigator {
-	delimiter := DefaultDelimiter
-	if len(_delimiter) > 0 {
-		delimiter = _delimiter[0]
-	}
-	return &Navigator{source: source, delimiter: delimiter}
+func New(source IGetter) *Navigator {
+	return &Navigator{source: source}
 }
 
-func FromMap(source map[string]any, _delimiter ...rune) *Navigator {
-	return New(getterMap(source), _delimiter...)
+func FromMap(source map[string]any) *Navigator {
+	return New(getterMap(source))
 }
 
-func FromList(source []any, _delimiter ...rune) *Navigator {
-	return New(getterList(source), _delimiter...)
+func FromList(source []any) *Navigator {
+	return New(getterList(source))
 }
 
 type Navigator struct {
-	source    IGetter
-	delimiter rune
+	source IGetter
 }
 
 type getterMap map[string]any
@@ -109,8 +101,4 @@ func (fm *Navigator) SetListSource(source []any) {
 
 func (fm *Navigator) SetSource(source IGetter) {
 	fm.source = source
-}
-
-func (fm *Navigator) SetDelimiter(delimiter rune) {
-	fm.delimiter = delimiter
 }
