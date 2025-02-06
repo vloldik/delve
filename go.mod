@@ -1,4 +1,3 @@
-module github.com/vloldik/flexmap
+module github.com/vloldik/delve
 
 go 1.22.7
-

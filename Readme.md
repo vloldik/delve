@@ -1,6 +1,6 @@
-# FlexMap
+# delve
 
-FlexMap is a Go package that provides a flexible map implementation for handling nested data structures with easy access using qualified paths.
+delve is a Go package that provides a flexible map implementation for handling nested data structures with easy access using qualified paths.
 
 ## Features
 
@@ -13,7 +13,7 @@ FlexMap is a Go package that provides a flexible map implementation for handling
 ## Installation
 
 ```bash
-go get github.com/vloldik/flexmap
+go get github.com/vloldik/delve
 ```
 
 ## Usage
@@ -25,11 +25,11 @@ package main
 
 import (
     "encoding/json"
-    "github.com/vloldik/flexmap"
+    "github.com/vloldik/delve"
 )
 
 func main() {
-    // Create and populate FlexMap from JSON
+    // Create and populate delve from JSON
     jsonData := `{
         "user": {
             "profile": {
@@ -39,16 +39,16 @@ func main() {
         }
     }`
     
-    flexMap := make(flexmap.FlexMap)
-    json.Unmarshal([]byte(jsonData), &flexMap)
+    delve := make(delve.delve)
+    json.Unmarshal([]byte(jsonData), &delve)
 
     // Access nested values using dot notation
-    if value, ok := flexMap.GetByQual("user.profile.name"); ok {
+    if value, ok := delve.GetByQual("user.profile.name"); ok {
         name := value.(string) // "John"
     }
 
     // Access array elements
-    if value, ok := flexMap.GetByQual("user.profile.scores.1"); ok {
+    if value, ok := delve.GetByQual("user.profile.scores.1"); ok {
         score := value.(float64) // 20
     }
 }
@@ -58,7 +58,7 @@ func main() {
 
 ```go
 // Using GetTypedByQual for type-safe value retrieval
-name, ok := flexmap.GetTypedByQual[string]("user.profile.name", flexMap)
+name, ok := delve.GetTypedByQual[string]("user.profile.name", delve)
 if ok {
     // name is already a string, no type assertion needed
 }
@@ -68,26 +68,26 @@ if ok {
 
 ```go
 // Change the default delimiter
-flexmap.QDelemiter = "/"
+delve.QDelemiter = "/"
 
 // Now use forward slashes for path separation
-value, ok := flexMap.GetByQual("user/profile/name")
+value, ok := delve.GetByQual("user/profile/name")
 ```
 
 ## Interface
 
 ### Types
 
-- `FlexMap`: Main type that implements the flexible map functionality
+- `delve`: Main type that implements the flexible map functionality
 - `FlexList`: Slice type for handling array/slice values
 - `IAnyGetter`: Interface for getting values by key
 
 ### Methods
 
-#### FlexMap
+#### delve
 - `Get(key string) (any, bool)`: Get value by key
 - `GetByQual(qual string) (any, bool)`: Get value using qualified path
-- `GetTypedByQual[T any](qual string, from FlexMap, allowNil ...bool) (T, bool)`: Get typed value using qualified path
+- `GetTypedByQual[T any](qual string, from delve, allowNil ...bool) (T, bool)`: Get typed value using qualified path
 
 ## License
 

@@ -1,4 +1,4 @@
-package flexmap
+package delve
 
 import "strings"
 
@@ -13,7 +13,7 @@ func (c CompiledQual) String() string {
 	return strings.Join(escaped, string(DefaultDelimiter))
 }
 
-func CompileQual(qual string, _delimiter ...rune) CompiledQual {
+func Qual(qual string, _delimiter ...rune) CompiledQual {
 	delimiter := DefaultDelimiter
 	parts := make(CompiledQual, 0)
 	if len(_delimiter) > 0 {

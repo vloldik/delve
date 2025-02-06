@@ -1,11 +1,11 @@
-package flexmap_test
+package delve_test
 
 import (
 	"fmt"
 	"strings"
 	"testing"
 
-	"github.com/vloldik/flexmap"
+	"github.com/vloldik/delve"
 )
 
 // 4.2 ns/op
@@ -19,9 +19,9 @@ func BenchmarkDirect(b *testing.B) {
 }
 
 // 45 ns/op
-func BenchmarkFlexMap(b *testing.B) {
-	fm := flexmap.FromMap(map[string]any{"test": map[string]any{"test": 123}})
-	qual := flexmap.CompileQual("test.test")
+func BenchmarkDelve(b *testing.B) {
+	fm := delve.FromMap(map[string]any{"test": map[string]any{"test": 123}})
+	qual := delve.Qual("test.test")
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -33,9 +33,9 @@ func BenchmarkFlexStringLen(b *testing.B) {
 	baseStr := "1"
 	for n := 0; n < 10; n++ {
 		str := baseStr + strings.Repeat("1", n*11+1) // Ensure unique strings
-		fm := flexmap.FromMap(map[string]any{str: map[string]any{"test": 123}})
+		fm := delve.FromMap(map[string]any{str: map[string]any{"test": 123}})
 		name := str + ".test"
-		qual := flexmap.CompileQual(name)
+		qual := delve.Qual(name)
 
 		b.Run(fmt.Sprintf("FlexStrLen-%d", len(str)), func(b *testing.B) { // Name benchmarks by string length
 			for i := 0; i < b.N; i++ {
@@ -52,14 +52,14 @@ func BenchmarkFlexStringDepth(b *testing.B) {
 		for i := 1; i < depth; i++ {
 			nestedMap = map[string]any{"level" + fmt.Sprintf("%d", i): nestedMap}
 		}
-		fm := flexmap.FromMap(nestedMap)
+		fm := delve.FromMap(nestedMap)
 
 		accessString := ""
 		for i := depth - 1; i >= 1; i-- {
 			accessString += "level" + fmt.Sprintf("%d", i) + "."
 		}
 		accessString += "test"
-		qual := flexmap.CompileQual(accessString)
+		qual := delve.Qual(accessString)
 
 		b.Run(fmt.Sprintf("FlexStrDepth-%d", depth), func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
@@ -71,8 +71,8 @@ func BenchmarkFlexStringDepth(b *testing.B) {
 
 // 48 ns/op
 func BenchmarkGetTyped(b *testing.B) {
-	fm := flexmap.FromMap(map[string]any{"lebel1": map[string]any{"test1": map[string]any{"inner": []string{"test"}}}})
-	qual := flexmap.CompileQual("lebel1.test1.inner.test")
+	fm := delve.FromMap(map[string]any{"lebel1": map[string]any{"test1": map[string]any{"inner": []string{"test"}}}})
+	qual := delve.Qual("lebel1.test1.inner.test")
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_ = fm.StringSlice(qual)

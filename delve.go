@@ -1,4 +1,4 @@
-package flexmap
+package delve
 
 import (
 	"strconv"
@@ -7,23 +7,23 @@ import (
 // Qdelimiter is used to separate nested keys in qualified paths
 const DefaultDelimiter = '.'
 
-func New(source IGetter, _delimiter ...rune) *FlexMap {
+func New(source IGetter, _delimiter ...rune) *Navigator {
 	delimiter := DefaultDelimiter
 	if len(_delimiter) > 0 {
 		delimiter = _delimiter[0]
 	}
-	return &FlexMap{source: source, delimiter: delimiter}
+	return &Navigator{source: source, delimiter: delimiter}
 }
 
-func FromMap(source map[string]any, _delimiter ...rune) *FlexMap {
+func FromMap(source map[string]any, _delimiter ...rune) *Navigator {
 	return New(getterMap(source), _delimiter...)
 }
 
-func FromList(source []any, _delimiter ...rune) *FlexMap {
+func FromList(source []any, _delimiter ...rune) *Navigator {
 	return New(getterList(source), _delimiter...)
 }
 
-type FlexMap struct {
+type Navigator struct {
 	source    IGetter
 	delimiter rune
 }
@@ -36,7 +36,7 @@ type IGetter interface {
 	Get(string) (any, bool)
 }
 
-// Get retrieves a value from FlexMap by key
+// Get retrieves a value from delve by key
 func (fm getterMap) Get(key string) (any, bool) {
 	value, ok := fm[key]
 	return value, ok
@@ -55,7 +55,7 @@ func (fl getterList) Get(uncasted string) (any, bool) {
 }
 
 // GetByQual retrieves a nested value using a compiled qualifier
-func (fm FlexMap) GetByQual(qual CompiledQual) (any, bool) {
+func (fm Navigator) GetByQual(qual CompiledQual) (any, bool) {
 	var currentGetter IGetter = fm.source
 	if currentGetter == nil {
 		return nil, false
@@ -74,14 +74,14 @@ func (fm FlexMap) GetByQual(qual CompiledQual) (any, bool) {
 }
 
 // Returns value by qual or panics
-func (fm FlexMap) MustGetByQual(qual CompiledQual) any {
+func (fm Navigator) MustGetByQual(qual CompiledQual) any {
 	if val, ok := fm.GetByQual(qual); ok {
 		return val
 	}
 	panic("could not get by qual " + qual.String())
 }
 
-// getInnerGetter retrieves nested FlexMap or FlexList values for further access
+// getInnerGetter retrieves nested delve or FlexList values for further access
 func getInnerGetter(key string, from IGetter) (IGetter, bool) {
 	result, ok := from.Get(key)
 	if !ok {
@@ -99,18 +99,18 @@ func getInnerGetter(key string, from IGetter) (IGetter, bool) {
 	}
 }
 
-func (fm *FlexMap) SetMapSource(source map[string]any) {
+func (fm *Navigator) SetMapSource(source map[string]any) {
 	fm.SetSource(getterMap(source))
 }
 
-func (fm *FlexMap) SetListSource(source []any) {
+func (fm *Navigator) SetListSource(source []any) {
 	fm.SetSource(getterList(source))
 }
 
-func (fm *FlexMap) SetSource(source IGetter) {
+func (fm *Navigator) SetSource(source IGetter) {
 	fm.source = source
 }
 
-func (fm *FlexMap) SetDelimiter(delimiter rune) {
+func (fm *Navigator) SetDelimiter(delimiter rune) {
 	fm.delimiter = delimiter
 }
