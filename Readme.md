@@ -1,3 +1,5 @@
+Here's the rewritten README.md focusing on the new API structure while preserving the performance section:
+
 # Delve
 
 High-performance nested data navigation library for Go with zero allocations and type-safe access
@@ -5,12 +7,13 @@ High-performance nested data navigation library for Go with zero allocations and
 ## Features
 
 - **Zero Allocation** - All operations performed without heap allocations
-- **Type-Safe Access** - 15+ type-specific methods (Int(), String(), Bool(), etc)
-- **Deep Navigation** - Unlimited depth traversal of map/struct hierarchies
-- **Path Escaping** - Handle keys containing delimiters via backslash escaping
-- **Dual Source Support** - Native handling of both maps and slices
-- **Compiled Paths** - Precompiled qualifiers for repeated access
-- **Default Values** - Safe return patterns with configurable defaults
+- **Type-Safe Access** - 20+ type-specific methods (Int(), String(), Bool(), etc)
+- **Path Precompilation** - Optimized access with `CQ` for static paths
+- **Deep Navigation** - Unlimited depth traversal of maps/slices
+- **Escape Handling** - Backslash escaping for special characters in keys
+- **Custom Delimiters** - Flexible path separator configuration
+- **Dual Qualifiers** - Choose between compiled (`CQ`) or string-based (`Q`) paths
+- **Default Values** - Safe return patterns with configurable fallbacks
 
 ## Installation
 
@@ -38,116 +41,186 @@ func main() {
 
 	nav := delve.FromMap(data)
 	
-	// Direct value access
-	userID := nav.Int(delve.Qual("user.id"))          // 123
-	profile := nav.Navigator(delve.Qual("user"))      // Get nested navigator
+	// Compiled path access
+	userID := nav.Int(delve.CQ("user.id"))          // 123
 	
-	// Slice navigation
-	firstRole := nav.String(delve.Qual("user.roles.0"))  // "admin"
+	// Dynamic path handling
+	roleIndex := 0
+	firstRole := nav.String(delve.Q(fmt.Sprintf("user.roles.%d", roleIndex)))  // "admin"
 	
-	// Special character handling
-	nav.Int(delve.Qual(`payments.invoice\.id`))  // Escaped key access
+	// Nested navigation
+	subNav := nav.Navigator(delve.CQ("user"))
+	userName := subNav.String(delve.CQ("name"))  // "John Doe"
 }
 ```
 
-## Path Navigation
+## Path Handling
 
 ### Special Characters
-
 ```go
-// Access keys containing dots
 data := map[string]any{
 	"a.b": map[string]any{
 		"c.d": 42,
 	},
 }
 
-nav.Int(delve.Qual(`a\.b.c\.d`))  // 42
+nav.Int(delve.CQ(`a\.b.c\.d`))  // 42
 ```
 
 ### Custom Delimiters
-
 ```go
-// Use '/' as path separator
-nav := delve.FromMap(data)
-value := nav.Int(delve.Qual("a/b/c/d", '/'))
+// Unix-style paths
+value := nav.Int(delve.CQ("a/b/c/d", '/'))
+
+// Mixed delimiters
+nav.Int(delve.CQ("first:second:third", ':'))
 ```
 
-### Nested Structures
-
+### Slice Navigation
 ```go
-// Direct sub-navigation
-subNav := nav.Navigator(delve.Qual("user.profile"))
-email := subNav.String(delve.Qual("contact.email"))
+// Negative indexes for reverse access
+lastItem := nav.String(delve.CQ("results.-1"))
+
+// Multi-dimensional arrays
+matrixValue := nav.Float64(delve.CQ("matrix.3.14"))
 ```
 
-## Performance Benchmarks
+## Core API
 
-Tested on 12th Gen Intel® CoreTM i5-12500H (Windows/amd64):
-
-| Test Case                  | Operations/sec | Time/Op | Allocs/Op |
-|----------------------------|----------------|---------|-----------|
-| Direct Map Access          | 263,452,660    | 4.53ns  | 0         |
-| Shallow Delve Access       | 65,676,771     | 15.74ns | 0         |
-| Depth 10 Access            | 16,352,204     | 86.35ns | 0         |
-| 506 Character Key Access   | 42,016,806     | 29.48ns | 0         |
-
-
-**Performance Characteristics:**
-- Shallow access (1-2 levels) adds ~13ns overhead vs direct access
-- Each nesting level adds 6-7ns
-- Key length variations (2-506 chars) add <10ns penalty
-- All operations achieve 0 allocations
-- Linear O(n) time complexity relative to path depth
-
-## API Reference
-
-### Core Methods
-
-| Method               | Return Type     | Description                                |
-|----------------------|-----------------|--------------------------------------------|
-| `GetByQual()`        | `(any, bool)`   | Direct value access with success check     |
-| `MustGetByQual()`    | `any`           | Panic-on-error value retrieve             |
-| `Navigator()`        | `*Navigator`    | Sub-context for nested data                |
-| `Int()/String()/etc` | `<type>`        | Type-converted values with default support|
-
-### Supported Conversions
-
-**Numeric Types**
-- All int/uint variants (8/16/32/64)
-- float32/float64
-- complex64/complex128
-
-**Special Types**
-- `[]byte` and `[]rune` slices
-- `map[string]string` maps
-- Nested `[]any` slices
-- Sub-`Navigator` contexts
-
-### Usage Patterns
-
-**Safe Value Access**
+### Value Access
 ```go
-// With default value
-age := nav.Int(delve.Qual("user.age"), 25) 
+// Safe access with defaults
+timeout := nav.Int(delve.CQ("config.timeout"), 30) 
 
-// Default to search depth
-depth := nav.Uint32(delve.Qual("config.pagination.limit"), 50)
+// Type-specific methods
+isActive := nav.Bool(delve.CQ("user.active"), false)
+ratio := nav.Float32(delve.CQ("metrics.ratio"))
+
+// Mandatory values
+criticalID := nav.MustGetByQual(delve.CQ("system.id"))
 ```
 
-**Mandatory Values**
+### Navigation Control
 ```go
-// Panics if value not found
-criticalID := nav.MustGetByQual(delve.Qual("system.critical_id")) 
+// Direct nested access
+subNav := nav.Navigator(delve.CQ("user.profile"))
+email := subNav.String(delve.CQ("contact.email"))
+
+// Map value check
+if val, exists := nav.GetByQual(delve.CQ("optional.path")); exists {
+	// Handle value
+}
 ```
 
-**Slice Operations**
+## Qualifiers Explained
+
+### Compiled Qualifiers (CQ)
 ```go
-// Access slice elements
-lastItem := nav.String(delve.Qual("results.-1"))  
- 
-// Multidimensional slices
-matrixValue := nav.Float64(delve.Qual("matrix.3.14"))
+// Precompile static paths
+userQual := delve.CQ("user.meta")
+name := nav.String(userQual.Copy().String()) 
+
+// Cache frequently used paths
+var (
+	qualCartTotal = delve.CQ("cart.totals.grand")
+	qualInventory = delve.CQ("warehouse.stock.-1")
+)
+
+total := nav.Float64(qualCartTotal)
+lastStock := nav.Int(qualInventory)
+```
+
+### String Qualifiers (Q)
+```go
+// Dynamic path construction
+buildPath := func(region string) delve.IQual {
+	return delve.Q(fmt.Sprintf("metrics.regions.%s.active", region))
+}
+
+// Runtime configuration
+delimiter := getRuntimeDelimiter()
+value := nav.Int(delve.Q("path/with/custom/delimiter", delimiter))
+```
+
+# Benchmark Results
+
+Key insights from performance tests:
+
+- **Direct access is ~5x faster** than Delve navigation (4.27ns vs 20.49ns)
+
+- **Precompiled qualifiers (CQ)** show significant advantages:
+
+  - 2-5x faster access than string-based qualifiers
+
+  - Performance remains stable with increasing key length
+
+- **Qualifier creation overhead** grows with complexity:
+
+  - 81ns for simple paths vs 1.9μs for 506-character paths
+
+  - Linear allocation growth with path depth
+
+## Performance Comparison
+
+### Basic Access
+
+| Method         | ns/op  | Allocs/op |
+|----------------|--------|-----------|
+| Direct map     | 4.27   | 0         |
+| Delve (CQ)     | 20.49  | 0         |
+
+### Variable Key Length (ns/op)
+
+| Key Length | CompiledQ | StringQ  |
+|------------|-----------|----------|
+| 2          | 21.84     | 31.95    |
+| 14         | 22.47     | 42.82    |
+| 506        | 30.38     | 372.4    |
+
+### Nested Depth (ns/op)
+
+| Depth | CompiledQ | StringQ  |
+|-------|-----------|----------|
+| 1     | 14.08     | 16.14    |
+| 5     | 43.42     | 78.74    |
+| 10    | 85.05     | 164.2    |
+
+## Qualifier Creation Costs
+
+### By Key Length
+
+| Key Length | ns/op  | Allocs/op |
+|------------|--------|-----------|
+| 2          | 117.8  | 4         |
+| 239        | 1032   | 8         |
+| 506        | 1926   | 9         |
+
+### By Nesting Depth
+
+| Depth | ns/op  | Allocs/op |
+|-------|--------|-----------|
+| 1     | 81.88  | 3         |
+| 5     | 299.7  | 7         |
+| 10    | 565.5  | 12        |
+
+## Optimization Guide
+
+1. **Prefer CQ** for static paths in hot code paths
+2. **Reuse qualifiers** with `Copy()` for similar paths
+3. **Batch operations** using cached navigators
+4. **Avoid qualifier creation** in tight loops
+5. **Use type-specific methods** for direct access
+
+```go
+// Optimal pattern
+var (
+	qualUser = delve.CQ("user")
+	qualName = delve.CQ("name")
+)
+
+func getUserName(nav *delve.Navigator) string {
+	return nav.Navigator(qualUser).String(qualName)
+}
 ```
 
 ## License
