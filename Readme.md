@@ -143,20 +143,15 @@ value := nav.Int(delve.Q("path/with/custom/delimiter", delimiter))
 # Benchmark Results
 
 Key insights from performance tests:
-
 - **Direct access is ~5x faster** than Delve navigation (4.27ns vs 20.49ns)
 
 - **Precompiled qualifiers (CQ)** show significant advantages:
-
-  - 2-5x faster access than string-based qualifiers
-
-  - Performance remains stable with increasing key length
-
+  - 2-5x faster access than string-based qualifiers
+  - Performance remains stable with increasing key length
+  
 - **Qualifier creation overhead** grows with complexity:
-
-  - 81ns for simple paths vs 1.9μs for 506-character paths
-
-  - Linear allocation growth with path depth
+  - 81ns for simple paths vs 1.9μs for 506-character paths
+  - Linear allocation growth with path depth
 
 ## Performance Comparison
 
