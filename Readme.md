@@ -1,5 +1,3 @@
-Here's the rewritten README.md focusing on the new API structure while preserving the performance section:
-
 # Delve
 
 High-performance nested data navigation library for Go with zero allocations and type-safe access
