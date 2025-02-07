@@ -88,9 +88,9 @@ Tested on 12th Gen Intel® CoreTM i5-12500H (Windows/amd64):
 | Test Case                  | Operations/sec | Time/Op | Allocs/Op |
 |----------------------------|----------------|---------|-----------|
 | Direct Map Access          | 263,452,660    | 4.53ns  | 0         |
-| Shallow Delve Access       | 65,676,771     | 17.74ns | 0         |
-| Depth 10 Access            | 16,352,204     | 73.35ns | 0         |
-| 506 Character Key Access   | 42,016,806     | 27.48ns | 0         |
+| Shallow Delve Access       | 65,676,771     | 15.74ns | 0         |
+| Depth 10 Access            | 16,352,204     | 86.35ns | 0         |
+| 506 Character Key Access   | 42,016,806     | 29.48ns | 0         |
 
 
 **Performance Characteristics:**

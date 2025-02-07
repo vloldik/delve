@@ -1,8 +1,17 @@
 package delve
 
 import (
+	"fmt"
 	"strconv"
 )
+
+// Interface represents qualifier to access fields of navigator
+type IQual interface {
+	// Function to access next part of qualifier
+	Next() (string, bool)
+	// Function to reset qualifier back to zero offset start state.
+	Reset()
+}
 
 func New(source IGetter) *Navigator {
 	return &Navigator{source: source}
@@ -23,7 +32,7 @@ type Navigator struct {
 type getterMap map[string]any
 type getterList []any
 
-// IGetter defines an interface for getting values by key
+// IGetter defines an interface for navigator data source
 type IGetter interface {
 	Get(string) (any, bool)
 }
@@ -40,6 +49,9 @@ func (fl getterList) Get(uncasted string) (any, bool) {
 	if err != nil {
 		return nil, false
 	}
+	if key == -1 {
+		key = max(0, len(fl)-1)
+	}
 	if len(fl) < key {
 		return nil, false
 	}
@@ -47,30 +59,34 @@ func (fl getterList) Get(uncasted string) (any, bool) {
 }
 
 // GetByQual retrieves a nested value using a compiled qualifier
-func (fm Navigator) GetByQual(qual CompiledQual) (any, bool) {
+func (fm Navigator) GetByQual(qual IQual) (any, bool) {
+	defer qual.Reset()
+
 	var currentGetter IGetter = fm.source
 	if currentGetter == nil {
 		return nil, false
 	}
-	for i, part := range qual {
-		if i == len(qual)-1 {
+	var hasNext bool = true
+	var part string
+
+	for hasNext {
+		part, hasNext = qual.Next()
+		if !hasNext {
 			return currentGetter.Get(part)
 		}
-		if value, ok := getInnerGetter(part, currentGetter); ok {
-			currentGetter = value
-		} else {
-			return nil, false
+		if inner, ok := getInnerGetter(part, currentGetter); ok {
+			currentGetter = inner
 		}
 	}
 	return nil, false
 }
 
 // Returns value by qual or panics
-func (fm Navigator) MustGetByQual(qual CompiledQual) any {
+func (fm Navigator) MustGetByQual(qual IQual) any {
 	if val, ok := fm.GetByQual(qual); ok {
 		return val
 	}
-	panic("could not get by qual " + qual.String())
+	panic(fmt.Sprintf("could not get by qual %v", qual))
 }
 
 // getInnerGetter retrieves nested delve or FlexList values for further access
