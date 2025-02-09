@@ -340,15 +340,7 @@ These benchmarks compare various scenarios of setting values within nested data 
 
 1.  **Prefer CQ over Q:**  Use compiled qualifiers (`delve.CQ`) for static paths, especially in frequently executed code.  String qualifiers (`delve.Q`) are better for dynamically constructed paths.
 
-2.  **Reuse Qualifiers:**  If you're accessing variations of the same base path, use `qualifier.Copy().String()`.  This avoids recompiling the base parts of the path.  For example:
-
-    ```go
-    baseQual := delve.CQ("user.profile")
-    name := nav.String(baseQual.Copy().String() + ".name")
-    email := nav.String(baseQual.Copy().String() + ".email")
-    ```
-
-3.  **Cache Navigators:** If you need to access multiple values within the *same* nested section, create a `Navigator` once and reuse it:
+2.  **Cache Navigators:** If you need to access multiple values within the *same* nested section, create a `Navigator` once and reuse it:
 
     ```go
     userNav := nav.Navigator(delve.CQ("user"))
@@ -356,7 +348,7 @@ These benchmarks compare various scenarios of setting values within nested data 
     id := userNav.Int(delve.CQ("id"))
     ```
 
-4.  **Avoid Qualifier Creation in Loops:** Creating qualifiers (especially `CQ`) has a cost.  Do it *outside* of loops:
+3.  **Avoid Qualifier Creation in Loops:** Creating qualifiers (especially `CQ`) has a cost.  Do it *outside* of loops:
 
     ```go
     // BAD:  Recompiles the qualifier on every iteration
@@ -382,13 +374,13 @@ These benchmarks compare various scenarios of setting values within nested data 
     // }
     ```
 
-5.  **Use Type-Specific Methods:** Use methods like `Int()`, `String()`, `Bool()`, etc., when you know the expected type. Avoid unnecessary type assertions.
+4.  **Use Type-Specific Methods:** Use methods like `Int()`, `String()`, `Bool()`, etc., when you know the expected type. Avoid unnecessary type assertions.
 
-6.  **Pre-allocate Maps and Slices:**  If you have a good estimate of the maximum size of maps or slices *before* using Delve, pre-allocate them using `make(map[string]any, size)` or `make([]any, size)`.  This can reduce reallocations if Delve needs to grow these structures.
+5.  **Pre-allocate Maps and Slices:**  If you have a good estimate of the maximum size of maps or slices *before* using Delve, pre-allocate them using `make(map[string]any, size)` or `make([]any, size)`.  This can reduce reallocations if Delve needs to grow these structures.
 
-7.  **Consider Direct Access (When Possible):** Delve is most helpful when you *don't* know the exact structure of your data at compile time. If you *do* have a fixed, well-defined data structure, direct access (e.g., `myData.User.Profile.Address.City`) will *always* be faster.  Use Delve for flexibility, not as a replacement for direct access when the structure is known.
+6.  **Consider Direct Access (When Possible):** Delve is most helpful when you *don't* know the exact structure of your data at compile time. If you *do* have a fixed, well-defined data structure, direct access (e.g., `myData.User.Profile.Address.City`) will *always* be faster.  Use Delve for flexibility, not as a replacement for direct access when the structure is known.
 
-8. **Use `SafeInterface()` for type-safe access to raw `any` values**
+7. **Use `SafeInterface()` for type-safe access to raw `any` values**
 
 ```go
 // Optimal pattern
