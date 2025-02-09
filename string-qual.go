@@ -65,6 +65,9 @@ func Q(qual string, _delimiter ...rune) *stringQual {
 	if len(_delimiter) > 0 {
 		delimiter = _delimiter[0]
 	}
+	if delimiter == '\\' {
+		panic(`delimiter can not be a "\"`)
+	}
 	return &stringQual{
 		delimiter: delimiter,
 		_initQual: qual,

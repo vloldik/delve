@@ -15,6 +15,7 @@ type CompiledQual struct {
 
 func (c *CompiledQual) Copy() IQual {
 	return &CompiledQual{
+		// No need to copy list, it's read-only
 		parts:     c.parts,
 		len:       c.len,
 		index:     0,
@@ -74,7 +75,7 @@ func CQ(qual string, _delimiter ...rune) *CompiledQual {
 		delimiter = _delimiter[0]
 	}
 	if delimiter == '\\' {
-		panic("Delimiter cannot be a backslash")
+		panic(`delimiter can not be a "\"`)
 	}
 
 	expectedParts := strings.Count(qual, string(delimiter)) + 1
