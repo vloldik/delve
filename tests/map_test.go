@@ -7,6 +7,16 @@ import (
 	"github.com/vloldik/delve/v2"
 )
 
+type mockSource struct{}
+
+func (mockSource) Set(string, any) bool {
+	return true
+}
+
+func (mockSource) Get(string) (any, bool) {
+	return nil, true
+}
+
 const jsonTestStruct = `{
 	"a": {
 		"b": [
@@ -30,7 +40,7 @@ func TestUsage(m *testing.T) {
 		panic(err)
 	}
 	nav := delve.FromMap(mMap)
-	if nav.Int(delve.CQ("a.b.0.c")) != 3 {
+	if nav.Float64(delve.CQ("a.b.0.c")) != 3.14 {
 		m.FailNow()
 	}
 	if !nav.Bool(delve.Q("a.b.-1.last")) {
@@ -104,8 +114,15 @@ func TestTypeGets(t *testing.T) {
 		t.Errorf("Float64 not equal")
 	}
 
-	if nav.Float32(delve.CQ("a.b.0.g")) != 1.1 {
-		t.Errorf("Float32 not equal")
+	if nav.Int8(delve.Q("a.b.0.h"), -1) != -1 {
+		t.Errorf("Overflow should be handled")
+	}
+
+	valfloat32 := nav.Float32(delve.CQ("a.b.0.g"), -1)
+	valfloat64 := nav.Float64(delve.CQ("a.b.0.g"), 0)
+
+	if valfloat64 == 0 || (valfloat32 != -1 && float64(valfloat32) != valfloat64) {
+		t.Errorf("Float64 should not be convertible to float32")
 	}
 
 	if nav.Int(delve.CQ("a.b.0.f")) != 1 {
@@ -162,6 +179,17 @@ func TestTypeGets(t *testing.T) {
 
 	if nav.SafeInterface(delve.Q("a.b.0.g"), float64(1)).(float64) != 1.1 {
 		t.Error("a.b.0.g should be 1.1")
+	}
+
+	if nav.SafeInterface(delve.Q("a.b.0.g"), any(4)) != any(4) {
+		t.Error("safe interface should allow usinh any")
+	}
+
+	testMap := map[string]any{"test": mockSource{}}
+
+	var defaultVal any
+	if delve.FromMap(testMap).SafeInterface(delve.Q("test"), defaultVal) == defaultVal {
+		t.Error("should assign mocksource to mocksource")
 	}
 }
 

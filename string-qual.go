@@ -62,10 +62,7 @@ func (sq *stringQual) Reset() {
 
 // Creates an uncompiled qualifier, which is cheaper to create than a compiled one, but more expensive to reuse and depends on the length of the string.
 func Q(qual string, _delimiter ...rune) *stringQual {
-	delimiter := DefaultDelimiter
-	if len(_delimiter) > 0 {
-		delimiter = _delimiter[0]
-	}
+	delimiter := defaultVal(DefaultDelimiter, _delimiter)
 	if delimiter == '\\' {
 		panic(`delimiter can not be a "\"`)
 	}

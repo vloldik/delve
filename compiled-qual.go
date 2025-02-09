@@ -71,10 +71,7 @@ func (c *compiledQual) String() string {
 
 // Creates a compiled qual, which is more efficient for reuse, but has a higher creation cost than string qual.
 func CQ(qual string, _delimiter ...rune) *compiledQual {
-	delimiter := DefaultDelimiter
-	if len(_delimiter) > 0 {
-		delimiter = _delimiter[0]
-	}
+	delimiter := defaultVal(DefaultDelimiter, _delimiter)
 	if delimiter == '\\' {
 		panic(`delimiter can not be a "\"`)
 	}
