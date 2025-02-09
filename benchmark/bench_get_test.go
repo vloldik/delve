@@ -83,12 +83,36 @@ func BenchmarkFlexStringDepth(b *testing.B) {
 
 // 48 ns/op
 func BenchmarkGetTyped(b *testing.B) {
-	fm := delve.FromMap(map[string]any{"lebel1": map[string]any{"test1": map[string]any{"inner": []int{0}}}})
+	fm := delve.FromMap(map[string]any{"lebel1": map[string]any{"test1": map[string]any{"inner": []any{0}, "string": "string"}}})
 	qual := delve.CQ("lebel1.test1.inner")
+	qualForString := delve.CQ("lebel1.test1.string")
+	zeroQ := delve.CQ("0")
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_ = fm.Navigator(qual).Int(delve.CQ("0"))
-	}
+	b.Run("Get an inner value", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			_ = fm.Navigator(qual).Int(zeroQ)
+		}
+	})
+	b.Run("Get an array (unsafe)", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			_ = fm.Interface(qual).([]any)[0].(int)
+		}
+	})
+	b.Run("Get an inner array (safe)", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			_ = fm.SafeInterface(qual, []any{}).([]any)[0].(int)
+		}
+	})
+	b.Run("Get len of a string with len function", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			_ = fm.Len(qualForString)
+		}
+	})
+	b.Run("Get len of a string by get it directly", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			_ = len(fm.String(qualForString))
+		}
+	})
 }
 
 func BenchmarkQualCreationDifferentStringLen(b *testing.B) {

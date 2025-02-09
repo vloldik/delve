@@ -151,6 +151,18 @@ func TestTypeGets(t *testing.T) {
 	if nav.Navigator(delve.CQ("a.b.0.j")) == nil {
 		t.Errorf("Navigator not equal")
 	}
+
+	if len := nav.Len(delve.Q("a.b")); len != 2 {
+		t.Errorf("a.b. len is two, but got %d", len)
+	}
+
+	if nav.Interface(delve.Q("a.b.0.f")).(float64) != 1 {
+		t.Errorf("a.b.0.f should be 1.")
+	}
+
+	if nav.SafeInterface(delve.Q("a.b.0.g"), float64(1)).(float64) != 1.1 {
+		t.Error("a.b.0.g should be 1.1")
+	}
 }
 
 func TestTypeDefaults(t *testing.T) {
@@ -215,5 +227,17 @@ func TestTypeDefaults(t *testing.T) {
 
 	if nav.Uint8(delve.CQ("notexist"), 1) != 1 {
 		t.Errorf("Uint8 default not equal")
+	}
+
+	if nav.Len(delve.Q("a.b.c")) != -1 {
+		t.Errorf("Len of non countable types should be -1")
+	}
+
+	if nav.Interface(delve.Q("notexists")) != nil {
+		t.Errorf("interface default not equal")
+	}
+
+	if nav.SafeInterface(delve.Q("a.b"), 1).(int) != 1 {
+		t.Errorf("safe interface default not equal")
 	}
 }

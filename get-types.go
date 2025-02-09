@@ -1,5 +1,7 @@
 package delve
 
+import "reflect"
+
 type Numeric interface {
 	float64 | float32 | int | int64 | int32 | int16 | int8 | uint | uint64 | uint32 | uint16 | uint8
 }
@@ -50,6 +52,44 @@ func getTyped[T any](fm *Navigator, qual IQual, _default ...T) T {
 		}
 	}
 	return defaultVal
+}
+
+// Len attempts to get the length of a value associated with a given qualifier.
+//
+// It retrieves the value associated with `qual`. If found, and the value is one of
+// the following types: Chan, Map, Array, Slice, or String, the function returns
+// the length of the value. Otherwise (the qualifier is not found, or the value
+// has a type that doesn't have a defined length concept in Go), it returns -1.
+func (fm *Navigator) Len(qual IQual) int {
+	val, ok := fm.QualGet(qual)
+	if !ok {
+		return -1
+	}
+	refVal := reflect.ValueOf(val)
+	switch refVal.Kind() {
+	case reflect.Chan, reflect.Map, reflect.Array, reflect.Slice, reflect.String:
+		return refVal.Len()
+	}
+	return -1
+}
+
+// SafeInterface retrieves a value associated with the given qualifier `qual`.
+// It returns the value if found and if it's type-assignable to the type of `defaultVal`.
+// If the qualifier is not found or the type is not assignable, it returns `defaultVal`.
+func (fm *Navigator) SafeInterface(qual IQual, defaultVal any) any {
+	val, ok := fm.QualGet(qual)
+	if !ok {
+		return defaultVal
+	}
+	if reflect.TypeOf(defaultVal).AssignableTo(reflect.TypeOf(val)) {
+		return val
+	}
+	return defaultVal
+}
+
+// Get interface or default.
+func (fm *Navigator) Interface(qual IQual, _default ...any) any {
+	return getTyped(fm, qual, _default...)
 }
 
 // Get string or default
@@ -241,7 +281,6 @@ func (fm *Navigator) Float32(qual IQual, _default ...float32) float32 {
 }
 
 func (fm *Navigator) Navigator(qual IQual) *Navigator {
-	var defaultVal Navigator
 	if val, ok := fm.QualGet(qual); ok {
 		switch casted := val.(type) {
 		case map[string]any:
@@ -252,5 +291,5 @@ func (fm *Navigator) Navigator(qual IQual) *Navigator {
 			return New(casted)
 		}
 	}
-	return &defaultVal
+	return nil
 }

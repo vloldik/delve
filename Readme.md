@@ -4,7 +4,7 @@ High-performance nested data navigation library for Go with zero allocations, ty
 
 ## Features
 
--   **Zero Allocation** -  Most operations, including reads and many writes, are performed without heap allocations.
+-   **Zero Allocation** - Most operations, including reads and many writes, are performed without heap allocations.
 -   **Type-Safe Access** - 20+ type-specific methods (Int(), String(), Bool(), etc.).
 -   **Path Precompilation** - Optimized access with `CQ` for static paths.
 -   **Deep Navigation** - Unlimited depth traversal of maps/slices.
@@ -12,9 +12,11 @@ High-performance nested data navigation library for Go with zero allocations, ty
 -   **Custom Delimiters** - Flexible path separator configuration.
 -   **Dual Qualifiers** - Choose between compiled (`CQ`) or string-based (`Q`) paths.
 -   **Default Values** - Safe return patterns with configurable fallbacks.
--   **Mutable Data Structures** -  Modify nested maps and slices in-place with `QualSet`.
+-   **Mutable Data Structures** - Modify nested maps and slices in-place with `QualSet`.
 -   **Append to Lists** - Add elements to the end of nested lists using the `"+"` index.
 -   **Negative List Indexing** - Access and modify list elements from the end using negative indices.
+-   **Interface Access** -  Retrieve raw `any` values, with safe and unsafe options.
+-   **Length Retrieval** - Determine the length of strings, slices, and maps.
 
 ## Installation
 
@@ -28,54 +30,66 @@ go get github.com/vloldik/delve/v2
 package main
 
 import (
-    "fmt"
-    "github.com/vloldik/delve/v2"
+	"fmt"
+	"github.com/vloldik/delve/v2"
 )
 
 func main() {
-    data := map[string]any{
-        "user": map[string]any{
-            "id":    123,
-            "name":  "John Doe",
-            "roles": []any{"admin", "editor"},
-        },
-    }
+	data := map[string]any{
+		"user": map[string]any{
+			"id":    123,
+			"name":  "John Doe",
+			"roles": []any{"admin", "editor"},
+		},
+	}
 
-    nav := delve.FromMap(data)
+	nav := delve.FromMap(data)
 
-    // Compiled path access
-    userID := nav.Int(delve.CQ("user.id")) // 123
+	// Compiled path access
+	userID := nav.Int(delve.CQ("user.id")) // 123
 
-    // Dynamic path handling
-    roleIndex := 0
-    firstRole := nav.String(delve.Q(fmt.Sprintf("user.roles.%d", roleIndex))) // "admin"
+	// Dynamic path handling
+	roleIndex := 0
+	firstRole := nav.String(delve.Q(fmt.Sprintf("user.roles.%d", roleIndex))) // "admin"
 
-    // Nested navigation
-    subNav := nav.Navigator(delve.CQ("user"))
-    userName := subNav.String(delve.CQ("name")) // "John Doe"
+	// Nested navigation
+	subNav := nav.Navigator(delve.CQ("user"))
+	userName := subNav.String(delve.CQ("name")) // "John Doe"
 
-    // Mutating the data:  Change the user's name.
-    nav.QualSet(delve.CQ("user.name"), "Jane Smith")
-    fmt.Println(nav.String(delve.CQ("user.name"))) // Output: Jane Smith
+	// Mutating the data:  Change the user's name.
+	nav.QualSet(delve.CQ("user.name"), "Jane Smith")
+	fmt.Println(nav.String(delve.CQ("user.name"))) // Output: Jane Smith
 
-    // Append a role to the user's roles:
-    nav.QualSet(delve.CQ("user.roles.+"), "viewer")
-    fmt.Println(nav.String(delve.CQ("user.roles.2"))) // Output: viewer
+	// Append a role to the user's roles:
+	nav.QualSet(delve.CQ("user.roles.+"), "viewer")
+	fmt.Println(nav.String(delve.CQ("user.roles.2"))) // Output: viewer
 
 	// Mutating with a list
 	listData := []any{
 		map[string]any{"id": 1},
 		map[string]any{"id": 2},
 	}
-  	listNav := delve.FromList(listData)
+	listNav := delve.FromList(listData)
 
-	// Changing a value deep withing a nested structure
+	// Changing a value deep within a nested structure
 	listNav.QualSet(delve.CQ("0.id"), 5)
 	fmt.Println(listNav.Int(delve.CQ("0.id"))) // Output: 5
 
 	// Using negative indexing to update the last elements id to 10
 	listNav.QualSet(delve.CQ("-1.id"), 10)
 	fmt.Println(listNav.Int(delve.CQ("-1.id"))) // Output: 10
+
+    // Using Interface() to get the raw value of roles
+    roles := nav.Interface(delve.CQ("user.roles"))
+    fmt.Printf("Roles (raw): %v\n", roles)
+
+    //Using SafeInterface() to get user object with default value as empty map
+    safeUser := nav.SafeInterface(delve.CQ("user.dog"), map[string]any{})
+    fmt.Printf("Safe User: %#v", safeUser)
+
+    // Getting length of roles by Len() method
+    rolesLen := nav.Len(delve.CQ("user.roles"))
+    fmt.Printf("Roles length is %d\n", rolesLen)
 }
 ```
 
@@ -85,9 +99,9 @@ func main() {
 
 ```go
 data := map[string]any{
-    "a.b": map[string]any{
-        "c.d": 42,
-    },
+	"a.b": map[string]any{
+		"c.d": 42,
+	},
 }
 
 nav.Int(delve.CQ(`a\.b.c\.d`))  // 42
@@ -138,7 +152,7 @@ email := subNav.String(delve.CQ("contact.email"))
 
 // Map value check
 if val, exists := nav.GetByQual(delve.CQ("optional.path")); exists {
-    // Handle value
+	// Handle value
 }
 ```
 
@@ -170,6 +184,45 @@ delveNav.QualSet(delve.CQ("b.nestedValue"), 42)
 fmt.Printf("b is %#v\n", delveNav.Get("b")) // Output b map[string]interface {}{"nestedValue":42}
 ```
 
+###  `Interface()` and `SafeInterface()`
+
+These methods provide access to the underlying `any` value at a given path.
+
+- **`Interface(qual IQual) any`**:  Returns the raw `any` value.  If the path does not exist or any intermediate node is of the wrong type, it returns `nil`.  This is the *unsafe* version because it's up to the caller to perform type assertions.
+
+- **`SafeInterface(qual IQual, defaultValue any) any`**:  Returns the `any` value, but *only* if it's the correct type (or nil). If the value at the path exists but is not of the expected type, `defaultValue` is returned.  If the path does not exist, `defaultValue` is returned.  This is the *safe* version, as it performs type checking before returning.
+
+```go
+// Unsafe access - requires type assertion (and possible panic)
+rawValue := nav.Interface(delve.CQ("user.roles"))
+rolesArray, ok := rawValue.([]any)
+if ok {
+    fmt.Println(rolesArray)
+}
+
+// Much Safer:  Provides []any{} as a default if the path/type is wrong.
+safeValue := nav.SafeInterface(delve.CQ("user.roles"), []any{})
+fmt.Println(safeValue) // No type assertion needed
+
+safeMap := nav.SafeInterface(delve.CQ("wrong.path", map[string]any{"a": 1})) //will return a map
+```
+
+### `Len(qual IQual) int`
+
+Retrieves the length of a value at a given path. The behavior depends on the underlying type:
+
+-   **Strings**: Returns the number of *runes* (Unicode code points) in the string.
+-   **Slices/Arrays**: Returns the number of elements.
+-   **Maps**: Returns the number of key-value pairs.
+-    **Other Types:** Returns -1
+
+```go
+stringLen := nav.Len(delve.CQ("user.name")) // Length of the name string
+rolesLen := nav.Len(delve.CQ("user.roles")) // Number of roles
+invalidLen := nav.Len(delve.CQ("user.id"))    // Returns -1 (int is not countable)
+notExistLen := nav.Len(delve.CQ("not.exists.path")) // Returns -1
+```
+
 ## Qualifiers Explained
 
 ### Compiled Qualifiers (CQ)
@@ -181,8 +234,8 @@ name := nav.String(userQual.Copy().String())
 
 // Cache frequently used paths
 var (
-    qualCartTotal = delve.CQ("cart.totals.grand")
-    qualInventory = delve.CQ("warehouse.stock.-1")
+	qualCartTotal = delve.CQ("cart.totals.grand")
+	qualInventory = delve.CQ("warehouse.stock.-1")
 )
 
 total := nav.Float64(qualCartTotal)
@@ -194,7 +247,7 @@ lastStock := nav.Int(qualInventory)
 ```go
 // Dynamic path construction
 buildPath := func(region string) delve.IQual {
-    return delve.Q(fmt.Sprintf("metrics.regions.%s.active", region))
+	return delve.Q(fmt.Sprintf("metrics.regions.%s.active", region))
 }
 
 // Runtime configuration
@@ -206,23 +259,30 @@ value := nav.Int(delve.Q("path/with/custom/delimiter", delimiter))
 
 Key insights from performance tests:
 
--   **Direct access is ~5x faster** than Delve navigation (4.27ns vs 20.49ns).  This highlights the inherent overhead of any abstraction.
+-   **Direct access is ~5x faster** than Delve navigation (4.27ns vs ~20ns).  This highlights the inherent overhead of *any* abstraction.  Direct access is always ideal when possible.
 -   **Precompiled qualifiers (CQ)** show significant advantages:
-    -   2-5x faster access than string-based qualifiers.
-    -   Performance remains stable with increasing key length.
+    -   2-5x faster access than string-based qualifiers (Q).
+    -   Performance remains stable with increasing key length, unlike string-based qualifiers, which degrade.
 -   **Qualifier creation overhead** grows with complexity:
-    -   81ns for simple paths vs 1.9μs for 506-character paths.
-    -   Linear allocation growth with path depth.
+    -   ~100ns for simple paths, increasing linearly with path depth and length.
+    -   Avoid qualifier creation within tight loops.
 - **Setting Values:** Modifying values with `QualSet` introduces some overhead compared to direct map/slice operations. `QualSet` is optimized for zero allocations when modifying *existing* values, but will allocate when creating new nested structures.
+- **Type assertions from `Interface()` are fast if no type conversion are made**.
+- **Getting Len from string is faster with delve, than getting value as string and calling `len()`**.
 
 ## Performance Comparison (Get)
 
 ### Basic Access
 
-| Method       | ns/op  | Allocs/op |
-| ------------ | ------ | --------- |
-| Direct map   | 4.27   | 0         |
-| Delve (CQ)   | 20.49  | 0         |
+| Method                                  | ns/op  | Allocs/op |
+| --------------------------------------- | ------ | --------- |
+| Direct map                              | 4.27   | 0         |
+| Delve (CQ)                              | 20.49  | 0         |
+| Delve Getting Inner value               | 122.0  | 2       |
+| Delve Getting array (unsafe)            | 39.69  | 0         |
+| Delve Getting array (safe)              | 46.45  | 0         |
+| Delve Getting string len with  len()    | 41.08  | 0         |
+| Delve Getting string len with String()  | 38.97  | 0         |
 
 ### Variable Key Length (ns/op)
 
@@ -259,43 +319,89 @@ Key insights from performance tests:
 | 10    | 565.5 | 12        |
 
 ## Set Benchmarks
+
 These benchmarks compare various scenarios of setting values within nested data structures using `delve.QualSet`.
 
 | Benchmark                     | ns/op | Allocs/op |
-|-------------------------------|-------|-----------|
-| SetValueInMap                 | 23.62 |     0    |
-| OverwriteValueInMap           | 26.05 |     0    |
-| SetValueInList                | 52.49 |     1    |
-| SetNestedValueInMap           | 140.0 |     2    |
-| AppendToList                  | 53.33 |     1    |
-| SetNegativeIndexInList        | 52.43 |     1    |
+| ----------------------------- | ----- | --------- |
+| SetValueInMap                 | 23.62 | 0         |
+| OverwriteValueInMap           | 26.05 | 0         |
+| SetValueInList                | 52.49 | 1         |
+| SetNestedValueInMap           | 140.0 | 2         |
+| AppendToList                  | 53.33 | 1         |
+| SetNegativeIndexInList        | 52.43 | 1         |
 
 *   **SetValueInMap**:  Sets a new key-value pair in an initially empty map. This is very fast and allocation-free *after* the initial map allocation.
 *   **OverwriteValueInMap**:  Modifies the value of an *existing* key. This demonstrates the zero-allocation optimization for existing paths.
 *   **SetValueInList**:  Sets a value at a specific index in a pre-populated list. Involves an allocation for boxing the integer as an `any`.
-*   **SetNestedValueInMap**:  Creates a new *nested* path (`a.b.c`) and sets a value. The allocations are for creating the intermediate `map[string]any` levels. On successive calls it will have 0 allocations and time will be about 48ns.
+*   **SetNestedValueInMap**:  Creates a new *nested* path (`a.b.c`) and sets a value. The allocations are for creating the intermediate `map[string]any` levels.  On successive calls *to the same path*, it will have 0 allocations.
 *   **AppendToList**:  Adds an element to the end of a list using the `"+"` index.
-*  **SetNegativeIndexInList**: Example of allocations of setting list element by negative index.
+*   **SetNegativeIndexInList**: Example of allocations of setting list element by negative index.
 
 ## Optimization Guide
 
-1.  **Prefer CQ** for static paths in hot code paths.
-2.  **Reuse qualifiers** with `Copy()` for similar paths.
-3.  **Batch operations** using cached navigators.
-4.  **Avoid qualifier creation** in tight loops.
-5.  **Use type-specific methods** for direct access.
-6.  **Pre-allocate** maps and slices if you know their maximum size.
-7.  When modifying deeply nested structures, consider whether direct access (if possible) would be more efficient *if* the structure of the maps and slices is well-defined and won't change.  `delve` is most valuable when the shape of your data isn't known at compile time.
+1.  **Prefer CQ over Q:**  Use compiled qualifiers (`delve.CQ`) for static paths, especially in frequently executed code.  String qualifiers (`delve.Q`) are better for dynamically constructed paths.
+
+2.  **Reuse Qualifiers:**  If you're accessing variations of the same base path, use `qualifier.Copy().String()`.  This avoids recompiling the base parts of the path.  For example:
+
+    ```go
+    baseQual := delve.CQ("user.profile")
+    name := nav.String(baseQual.Copy().String() + ".name")
+    email := nav.String(baseQual.Copy().String() + ".email")
+    ```
+
+3.  **Cache Navigators:** If you need to access multiple values within the *same* nested section, create a `Navigator` once and reuse it:
+
+    ```go
+    userNav := nav.Navigator(delve.CQ("user"))
+    name := userNav.String(delve.CQ("name"))
+    id := userNav.Int(delve.CQ("id"))
+    ```
+
+4.  **Avoid Qualifier Creation in Loops:** Creating qualifiers (especially `CQ`) has a cost.  Do it *outside* of loops:
+
+    ```go
+    // BAD:  Recompiles the qualifier on every iteration
+    for i := 0; i < len(myArray); i++ {
+        value := nav.Int(delve.CQ(fmt.Sprintf("data.%d.value", i)))
+    }
+
+    // GOOD:  Pre-compile the base, and copy/extend inside the loop.
+    baseQual := delve.CQ("data")
+    for i := 0; i < len(myArray); i++ {
+        value := nav.Int(baseQual.Copy().String() + fmt.Sprintf(".%d.value", i))
+    }
+
+     // Better:  If the structure is regular use a list
+	dataNav := nav.Navigator(delve.CQ("data"))              // Get 'data' navigator
+	qualValue := delve.CQ("value") // Pre-compile ".value"
+	for i := 0; i < len(myArray); i++ {
+	    value := dataNav.Navigator(delve.Q(strconv.Itoa(i))).Int(qualValue) // Access each element and its ".value"
+	}
+    // Ideal:
+    // for _, elem := range myArray {
+    //    value := elem.Value
+    // }
+    ```
+
+5.  **Use Type-Specific Methods:** Use methods like `Int()`, `String()`, `Bool()`, etc., when you know the expected type. Avoid unnecessary type assertions.
+
+6.  **Pre-allocate Maps and Slices:**  If you have a good estimate of the maximum size of maps or slices *before* using Delve, pre-allocate them using `make(map[string]any, size)` or `make([]any, size)`.  This can reduce reallocations if Delve needs to grow these structures.
+
+7.  **Consider Direct Access (When Possible):** Delve is most helpful when you *don't* know the exact structure of your data at compile time. If you *do* have a fixed, well-defined data structure, direct access (e.g., `myData.User.Profile.Address.City`) will *always* be faster.  Use Delve for flexibility, not as a replacement for direct access when the structure is known.
+
+8. **Use `SafeInterface()` for type-safe access to raw `any` values**
+9. **Use `Len()` when you need lengths of strings/arrays/maps**
 
 ```go
 // Optimal pattern
 var (
-    qualUser = delve.CQ("user")
-    qualName = delve.CQ("name")
+	qualUser = delve.CQ("user")
+	qualName = delve.CQ("name")
 )
 
 func getUserName(nav *delve.Navigator) string {
-    return nav.Navigator(qualUser).String(qualName)
+	return nav.Navigator(qualUser).String(qualName)
 }
 ```
 
