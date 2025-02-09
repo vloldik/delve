@@ -6,24 +6,24 @@ import (
 
 const DefaultDelimiter = '.' // Qdelimiter is used to separate nested keys in qualified paths
 
-type CompiledQual struct {
+type compiledQual struct {
 	parts     []string
 	len       uint8
 	index     uint8
 	delimiter rune
 }
 
-func (c *CompiledQual) Copy() IQual {
-	return &CompiledQual{
+func (c *compiledQual) Copy() IQual {
+	return &compiledQual{
 		// No need to copy list, it's read-only
 		parts:     c.parts,
 		len:       c.len,
-		index:     0,
+		index:     c.index,
 		delimiter: c.delimiter,
 	}
 }
 
-func (c *CompiledQual) Next() (string, bool) {
+func (c *compiledQual) Next() (string, bool) {
 	if c.index >= c.len {
 		return "", false
 	}
@@ -33,11 +33,11 @@ func (c *CompiledQual) Next() (string, bool) {
 	return part, hasNext
 }
 
-func (c *CompiledQual) Reset() {
+func (c *compiledQual) Reset() {
 	c.index = 0
 }
 
-func (c *CompiledQual) String() string {
+func (c *compiledQual) String() string {
 	if len(c.parts) == 0 {
 		return ""
 	}
@@ -69,7 +69,8 @@ func (c *CompiledQual) String() string {
 	return builder.String()
 }
 
-func CQ(qual string, _delimiter ...rune) *CompiledQual {
+// Creates a compiled qual, which is more efficient for reuse, but has a higher creation cost than string qual.
+func CQ(qual string, _delimiter ...rune) *compiledQual {
 	delimiter := DefaultDelimiter
 	if len(_delimiter) > 0 {
 		delimiter = _delimiter[0]
@@ -110,7 +111,7 @@ func CQ(qual string, _delimiter ...rune) *CompiledQual {
 		panic("qual len is too large!")
 	}
 
-	return &CompiledQual{
+	return &compiledQual{
 		parts:     parts,
 		len:       uint8(len(parts)),
 		delimiter: delimiter,
