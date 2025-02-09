@@ -3,7 +3,7 @@ package delve_test
 import (
 	"testing"
 
-	"github.com/vloldik/delve"
+	"github.com/vloldik/delve/v2"
 )
 
 func TestSetFunction(t *testing.T) {

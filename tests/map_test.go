@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/vloldik/delve"
+	"github.com/vloldik/delve/v2"
 )
 
 const jsonTestStruct = `{

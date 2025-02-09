@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/vloldik/delve"
+	"github.com/vloldik/delve/v2"
 )
 
 // 4.2 ns/op

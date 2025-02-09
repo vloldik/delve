@@ -4,7 +4,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/vloldik/delve"
+	"github.com/vloldik/delve/v2"
 )
 
 func TestQualCompile(t *testing.T) {
