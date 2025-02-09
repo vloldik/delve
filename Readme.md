@@ -201,10 +201,9 @@ if ok {
 }
 
 // Much Safer:  Provides []any{} as a default if the path/type is wrong.
-safeValue := nav.SafeInterface(delve.CQ("user.roles"), []any{})
-fmt.Println(safeValue) // No type assertion needed
+safeValue := nav.SafeInterface(delve.CQ("user.roles"), []any{}).([]any{}) // Will no panic even if user.roles is not []any
 
-safeMap := nav.SafeInterface(delve.CQ("wrong.path", map[string]any{"a": 1})) //will return a map
+safeMap := nav.SafeInterface(delve.CQ("wrong.path", map[string]any{"a": 1})) //will return a map[string]any always
 ```
 
 ### `Len(qual IQual) int`
@@ -267,8 +266,7 @@ Key insights from performance tests:
     -   ~100ns for simple paths, increasing linearly with path depth and length.
     -   Avoid qualifier creation within tight loops.
 - **Setting Values:** Modifying values with `QualSet` introduces some overhead compared to direct map/slice operations. `QualSet` is optimized for zero allocations when modifying *existing* values, but will allocate when creating new nested structures.
-- **Type assertions from `Interface()` are fast if no type conversion are made**.
-- **Getting Len from string is faster with delve, than getting value as string and calling `len()`**.
+- **Getting Len from a string with delve is slower than getting the value as a string and calling `len()`, but the difference is minimal.**.
 
 ## Performance Comparison (Get)
 
@@ -391,7 +389,6 @@ These benchmarks compare various scenarios of setting values within nested data 
 7.  **Consider Direct Access (When Possible):** Delve is most helpful when you *don't* know the exact structure of your data at compile time. If you *do* have a fixed, well-defined data structure, direct access (e.g., `myData.User.Profile.Address.City`) will *always* be faster.  Use Delve for flexibility, not as a replacement for direct access when the structure is known.
 
 8. **Use `SafeInterface()` for type-safe access to raw `any` values**
-9. **Use `Len()` when you need lengths of strings/arrays/maps**
 
 ```go
 // Optimal pattern
