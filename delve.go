@@ -2,7 +2,6 @@ package delve
 
 import (
 	"fmt"
-	"strconv"
 )
 
 // Interface represents qualifier to access fields of navigator
@@ -11,9 +10,17 @@ type IQual interface {
 	Next() (string, bool)
 	// Function to reset qualifier back to zero offset start state.
 	Reset()
+	// Function to get an independent copy of current qual
+	Copy() IQual
 }
 
-func New(source IGetter) *Navigator {
+// ISource defines an interface for navigator data source
+type ISource interface {
+	Get(string) (any, bool)
+	Set(string, any) bool
+}
+
+func New(source ISource) *Navigator {
 	return &Navigator{source: source}
 }
 
@@ -22,47 +29,26 @@ func FromMap(source map[string]any) *Navigator {
 }
 
 func FromList(source []any) *Navigator {
-	return New(getterList(source))
+	return New(&getterList{source})
 }
 
 type Navigator struct {
-	source IGetter
+	source ISource
 }
 
-type getterMap map[string]any
-type getterList []any
-
-// IGetter defines an interface for navigator data source
-type IGetter interface {
-	Get(string) (any, bool)
+func (fm *Navigator) Get(qual string) (any, bool) {
+	return fm.source.Get(qual)
 }
 
-// Get retrieves a value from delve by key
-func (fm getterMap) Get(key string) (any, bool) {
-	value, ok := fm[key]
-	return value, ok
+func (fm *Navigator) Set(qual string, value any) bool {
+	return fm.source.Set(qual, value)
 }
 
-// Get retrieves a value from FlexList by index (passed as string)
-func (fl getterList) Get(uncasted string) (any, bool) {
-	key, err := strconv.Atoi(uncasted)
-	if err != nil {
-		return nil, false
-	}
-	if key == -1 {
-		key = max(0, len(fl)-1)
-	}
-	if len(fl) < key {
-		return nil, false
-	}
-	return fl[key], true
-}
-
-// GetByQual retrieves a nested value using a compiled qualifier
-func (fm Navigator) GetByQual(qual IQual) (any, bool) {
+// QualGet retrieves a nested value using a compiled qualifier
+func (fm *Navigator) QualGet(qual IQual) (any, bool) {
 	defer qual.Reset()
 
-	var currentGetter IGetter = fm.source
+	var currentGetter ISource = fm.source
 	if currentGetter == nil {
 		return nil, false
 	}
@@ -76,31 +62,66 @@ func (fm Navigator) GetByQual(qual IQual) (any, bool) {
 		}
 		if inner, ok := getInnerGetter(part, currentGetter); ok {
 			currentGetter = inner
+		} else {
+			return nil, false
 		}
 	}
 	return nil, false
 }
 
+func (fm *Navigator) QualSet(qual IQual, value any) bool {
+	var currentGetter = fm.source
+	if fm.source == nil {
+		return false
+	}
+	var hasNext bool = true
+	var part string
+
+	pathExist := true
+	for hasNext {
+		if !pathExist {
+			newGetter := getterMap{}
+			if !currentGetter.Set(part, newGetter) {
+				return false
+			}
+			currentGetter = newGetter
+			part, hasNext = qual.Next()
+			continue
+		}
+		part, hasNext = qual.Next()
+		if !hasNext {
+			break
+		}
+		if inner, ok := getInnerGetter(part, currentGetter); ok {
+			currentGetter = inner
+		} else {
+			pathExist = false
+		}
+	}
+
+	return currentGetter.Set(part, value)
+}
+
 // Returns value by qual or panics
-func (fm Navigator) MustGetByQual(qual IQual) any {
-	if val, ok := fm.GetByQual(qual); ok {
+func (fm *Navigator) MustGetByQual(qual IQual) any {
+	if val, ok := fm.QualGet(qual); ok {
 		return val
 	}
 	panic(fmt.Sprintf("could not get by qual %v", qual))
 }
 
 // getInnerGetter retrieves nested delve or FlexList values for further access
-func getInnerGetter(key string, from IGetter) (IGetter, bool) {
+func getInnerGetter(key string, from ISource) (ISource, bool) {
 	result, ok := from.Get(key)
 	if !ok {
 		return nil, false
 	}
 	switch typed := result.(type) {
 	case []any:
-		return getterList(typed), true
+		return &getterList{list: typed}, true
 	case map[string]any:
 		return getterMap(typed), true
-	case IGetter:
+	case ISource:
 		return typed, true
 	default:
 		return nil, false
@@ -112,9 +133,9 @@ func (fm *Navigator) SetMapSource(source map[string]any) {
 }
 
 func (fm *Navigator) SetListSource(source []any) {
-	fm.SetSource(getterList(source))
+	fm.SetSource(&getterList{source})
 }
 
-func (fm *Navigator) SetSource(source IGetter) {
+func (fm *Navigator) SetSource(source ISource) {
 	fm.source = source
 }

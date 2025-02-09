@@ -13,7 +13,7 @@ type CompiledQual struct {
 	delimiter rune
 }
 
-func (c *CompiledQual) Copy() *CompiledQual {
+func (c *CompiledQual) Copy() IQual {
 	return &CompiledQual{
 		parts:     c.parts,
 		len:       c.len,

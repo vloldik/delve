@@ -44,7 +44,7 @@ func getTyped[T any](fm *Navigator, qual IQual, _default ...T) T {
 	if len(_default) > 0 {
 		defaultVal = _default[0]
 	}
-	if val, ok := fm.GetByQual(qual); ok {
+	if val, ok := fm.QualGet(qual); ok {
 		if casted, ok := val.(T); ok {
 			return casted
 		}
@@ -88,7 +88,7 @@ func (fm *Navigator) Int(qual IQual, _default ...int) int {
 	if len(_default) > 0 {
 		defaultVal = _default[0]
 	}
-	if val, ok := fm.GetByQual(qual); ok {
+	if val, ok := fm.QualGet(qual); ok {
 		if casted, ok := AnyToNumeric[int](val); ok {
 			return casted
 		}
@@ -102,7 +102,7 @@ func (fm *Navigator) Int64(qual IQual, _default ...int64) int64 {
 	if len(_default) > 0 {
 		defaultVal = _default[0]
 	}
-	if val, ok := fm.GetByQual(qual); ok {
+	if val, ok := fm.QualGet(qual); ok {
 		if casted, ok := AnyToNumeric[int64](val); ok {
 			return casted
 		}
@@ -116,7 +116,7 @@ func (fm *Navigator) Int32(qual IQual, _default ...int32) int32 {
 	if len(_default) > 0 {
 		defaultVal = _default[0]
 	}
-	if val, ok := fm.GetByQual(qual); ok {
+	if val, ok := fm.QualGet(qual); ok {
 		if casted, ok := AnyToNumeric[int32](val); ok {
 			return casted
 		}
@@ -130,7 +130,7 @@ func (fm *Navigator) Uint(qual IQual, _default ...uint) uint {
 	if len(_default) > 0 {
 		defaultVal = _default[0]
 	}
-	if val, ok := fm.GetByQual(qual); ok {
+	if val, ok := fm.QualGet(qual); ok {
 		if casted, ok := AnyToNumeric[uint](val); ok {
 			return casted
 		}
@@ -144,7 +144,7 @@ func (fm *Navigator) Uint64(qual IQual, _default ...uint64) uint64 {
 	if len(_default) > 0 {
 		defaultVal = _default[0]
 	}
-	if val, ok := fm.GetByQual(qual); ok {
+	if val, ok := fm.QualGet(qual); ok {
 		if casted, ok := AnyToNumeric[uint64](val); ok {
 			return casted
 		}
@@ -158,7 +158,7 @@ func (fm *Navigator) Uint32(qual IQual, _default ...uint32) uint32 {
 	if len(_default) > 0 {
 		defaultVal = _default[0]
 	}
-	if val, ok := fm.GetByQual(qual); ok {
+	if val, ok := fm.QualGet(qual); ok {
 		if casted, ok := AnyToNumeric[uint32](val); ok {
 			return casted
 		}
@@ -172,7 +172,7 @@ func (fm *Navigator) Uint16(qual IQual, _default ...uint16) uint16 {
 	if len(_default) > 0 {
 		defaultVal = _default[0]
 	}
-	if val, ok := fm.GetByQual(qual); ok {
+	if val, ok := fm.QualGet(qual); ok {
 		if casted, ok := AnyToNumeric[uint16](val); ok {
 			return casted
 		}
@@ -186,7 +186,7 @@ func (fm *Navigator) Uint8(qual IQual, _default ...uint8) uint8 {
 	if len(_default) > 0 {
 		defaultVal = _default[0]
 	}
-	if val, ok := fm.GetByQual(qual); ok {
+	if val, ok := fm.QualGet(qual); ok {
 		if casted, ok := AnyToNumeric[uint8](val); ok {
 			return casted
 		}
@@ -200,7 +200,7 @@ func (fm *Navigator) Int16(qual IQual, _default ...int16) int16 {
 	if len(_default) > 0 {
 		defaultVal = _default[0]
 	}
-	if val, ok := fm.GetByQual(qual); ok {
+	if val, ok := fm.QualGet(qual); ok {
 		if casted, ok := AnyToNumeric[int16](val); ok {
 			return casted
 		}
@@ -214,7 +214,7 @@ func (fm *Navigator) Int8(qual IQual, _default ...int8) int8 {
 	if len(_default) > 0 {
 		defaultVal = _default[0]
 	}
-	if val, ok := fm.GetByQual(qual); ok {
+	if val, ok := fm.QualGet(qual); ok {
 		if casted, ok := AnyToNumeric[int8](val); ok {
 			return casted
 		}
@@ -228,7 +228,7 @@ func (fm *Navigator) Float64(qual IQual, _default ...float64) float64 {
 	if len(_default) > 0 {
 		defaultVal = _default[0]
 	}
-	if val, ok := fm.GetByQual(qual); ok {
+	if val, ok := fm.QualGet(qual); ok {
 		if casted, ok := AnyToNumeric[float64](val); ok {
 			return casted
 		}
@@ -242,7 +242,7 @@ func (fm *Navigator) Float32(qual IQual, _default ...float32) float32 {
 	if len(_default) > 0 {
 		defaultVal = _default[0]
 	}
-	if val, ok := fm.GetByQual(qual); ok {
+	if val, ok := fm.QualGet(qual); ok {
 		if casted, ok := AnyToNumeric[float32](val); ok {
 			return casted
 		}
@@ -252,13 +252,13 @@ func (fm *Navigator) Float32(qual IQual, _default ...float32) float32 {
 
 func (fm *Navigator) Navigator(qual IQual) *Navigator {
 	var defaultVal Navigator
-	if val, ok := fm.GetByQual(qual); ok {
+	if val, ok := fm.QualGet(qual); ok {
 		switch casted := val.(type) {
 		case map[string]any:
 			return FromMap(casted)
 		case []any:
 			return FromList(casted)
-		case IGetter:
+		case ISource:
 			return New(casted)
 		}
 	}

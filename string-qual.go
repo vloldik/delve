@@ -6,7 +6,7 @@ type stringQual struct {
 	delimiter rune
 }
 
-func (sq *stringQual) Copy() *stringQual {
+func (sq *stringQual) Copy() IQual {
 	return &stringQual{
 		_initQual: sq._initQual,
 		qual:      sq.qual,
