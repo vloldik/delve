@@ -62,16 +62,6 @@ func (fm *Navigator) Bool(qual IQual, _default ...bool) bool {
 	return getTyped(fm, qual, _default...)
 }
 
-// Get byte slice or default
-func (fm *Navigator) ByteSlice(qual IQual, _default ...[]byte) []byte {
-	return getTyped(fm, qual, _default...)
-}
-
-// Get rune slice or default
-func (fm *Navigator) RuneSlice(qual IQual, _default ...[]rune) []rune {
-	return getTyped(fm, qual, _default...)
-}
-
 // Get complex64 or default
 func (fm *Navigator) Complex64(qual IQual, _default ...complex64) complex64 {
 	return getTyped(fm, qual, _default...)

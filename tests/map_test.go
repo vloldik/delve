@@ -100,11 +100,6 @@ func TestTypeGets(t *testing.T) {
 		t.Errorf("Bool not equal")
 	}
 
-	byteSlice := []byte(nav.String(delve.CQ("b.c.bytes")))
-	if string(byteSlice) != "AQID" {
-		t.Errorf("ByteSlice not equal")
-	}
-
 	if nav.Float64(delve.CQ("a.b.0.c")) != 3.14 {
 		t.Errorf("Float64 not equal")
 	}
@@ -172,10 +167,6 @@ func TestTypeDefaults(t *testing.T) {
 
 	if nav.Bool(delve.CQ("notexist"), true) != true {
 		t.Errorf("Bool default not equal")
-	}
-
-	if string(nav.ByteSlice(delve.CQ("notexist"), []byte("default"))) != "default" {
-		t.Errorf("ByteSlice default not equal")
 	}
 
 	if nav.Float64(delve.CQ("notexist"), 3.14) != 3.14 {
