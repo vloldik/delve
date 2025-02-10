@@ -36,12 +36,8 @@ type Navigator struct {
 	source ISource
 }
 
-func (fm *Navigator) Get(qual string) (any, bool) {
-	return fm.source.Get(qual)
-}
-
-func (fm *Navigator) Set(qual string, value any) bool {
-	return fm.source.Set(qual, value)
+func (fm *Navigator) Source() ISource {
+	return fm.source
 }
 
 // QualGet retrieves a nested value using a compiled qualifier

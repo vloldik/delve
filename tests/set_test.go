@@ -51,7 +51,7 @@ func TestSetFunction(t *testing.T) {
 		if !ok {
 			t.Fatal("QualSet failed")
 		}
-		if val, ok := nav.Get("1"); !ok {
+		if val, ok := nav.QualGet(delve.Q("1")); !ok {
 			t.Errorf("Expected [a b], got %v", nav)
 		} else if val.(string) != "b" {
 			t.Errorf("Expected b, got %v", val)

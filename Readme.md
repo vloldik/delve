@@ -1,5 +1,8 @@
 # Delve
 
+## TODO
+Add placeholders to compiled
+
 High-performance nested data navigation library for Go with zero allocations, type-safe access, and mutability.
 
 ## Features
@@ -201,7 +204,7 @@ if ok {
 }
 
 // Much Safer:  Provides []any{} as a default if the path/type is wrong.
-safeValue := nav.SafeInterface(delve.CQ("user.roles"), []any{}).([]any{}) // Will no panic even if user.roles is not []any
+safeValue := nav.SafeInterface(delve.CQ("user.roles"), []any{}).([]any{}) // Will not panic even if user.roles is not []any
 
 safeMap := nav.SafeInterface(delve.CQ("wrong.path", map[string]any{"a": 1})) //will return a map[string]any always
 ```
