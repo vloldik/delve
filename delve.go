@@ -74,6 +74,13 @@ func (fm *navigator) Get(qual string, _delimiter ...rune) *value.Value {
 	return fm.QGet(quals.Q(qual, _delimiter...))
 }
 
+// Set updates the data source at the specified string-qualified path with the given value.
+// The path is split into segments using the provided delimiter, or '.' by default.
+// Returns true if the operation succeeded. Fails if the path doesn't exist or is read-only.
+func (fm *navigator) Set(qual string, value any, _delimiter ...rune) bool {
+	return fm.QSet(quals.Q(qual, _delimiter...), value)
+}
+
 // QGet retrieves a qualified path value wrapped in a value.Value container.
 // Returns nil-value container if path doesn't exist.
 func (fm *navigator) QGet(qual idelve.IQual) *value.Value {

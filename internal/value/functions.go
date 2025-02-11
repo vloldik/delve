@@ -1,7 +1,7 @@
 package value
 
 // See delve.IterList
-func IterList[V any](val *Value, callback func(int, V)) {
+func IterList[V any](val *Value, callback func(int, V) bool) {
 	if val.original == nil {
 		return
 	}
@@ -10,12 +10,14 @@ func IterList[V any](val *Value, callback func(int, V)) {
 		return
 	}
 	for i, v := range list {
-		callback(i, v)
+		if callback(i, v) {
+			break
+		}
 	}
 }
 
 // See delve.IterMap
-func IterMap[K comparable, V any](val *Value, callback func(K, V)) {
+func IterMap[K comparable, V any](val *Value, callback func(K, V) bool) {
 	if val.original == nil {
 		return
 	}
@@ -24,6 +26,8 @@ func IterMap[K comparable, V any](val *Value, callback func(K, V)) {
 		return
 	}
 	for k, v := range mMap {
-		callback(k, v)
+		if callback(k, v) {
+			break
+		}
 	}
 }
