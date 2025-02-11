@@ -1,141 +1,129 @@
+// Package delve provides a flexible navigation and manipulation API for structured data (maps, slices).
+// It enables type-safe traversal and modification of nested data structures using qualified path references.
+//
+// Key features:
+// - Fluent interface for chaining operations
+// - Support for both maps and slices through generic interfaces
+// - Type-safe value retrieval with automatic wrapping
+// - Nested structure navigation through sub-navigators
+// - Optional panic-style error handling for mandatory operations
+//
+// The package operates through Navigator instances that wrap underlying data sources,
+// providing consistent access patterns regardless of the source data format.
 package delve
 
 import (
 	"fmt"
+
+	"github.com/vloldik/delve/v3/internal/quals"
+	"github.com/vloldik/delve/v3/internal/sources"
+	"github.com/vloldik/delve/v3/internal/value"
+	"github.com/vloldik/delve/v3/pkg/idelve"
 )
 
-// Interface represents qualifier to access fields of navigator
-type IQual interface {
-	// Function to access next part of qualifier
-	Next() (string, bool)
-	// Function to reset qualifier back to zero offset start state.
-	Reset()
-	// Function to get an independent copy of current qual
-	Copy() IQual
+// Navigator represents a navigation interface into structured data.
+// It wraps an underlying data source and provides methods for accessing
+// and modifying the data structure. The zero value is not usable - create
+// through New or From constructors.
+type Navigator = *navigator
+
+// sourceType constraints define valid base types for the generic New constructor.
+// Supports either maps (string-keyed) or slices as root data structures.
+type sourceType interface{ map[string]any | []any }
+
+// New creates a Navigator from a compatible source structure.
+// The generic parameter T must be either map[string]any or []any.
+// For complex existing implementations, use From with a custom ISource.
+func New[T sourceType](source T) Navigator {
+	return &navigator{source: sources.GetSource(source)}
 }
 
-// ISource defines an interface for navigator data source
-type ISource interface {
-	Get(string) (any, bool)
-	Set(string, any) bool
+// From creates a Navigator from an existing ISource implementation.
+// Allows integration with custom data sources that implement the ISource interface.
+func From(source idelve.ISource) Navigator {
+	return &navigator{source: source}
 }
 
-func New(source ISource) *Navigator {
-	return &Navigator{source: source}
+// navigator implements the core data navigation and manipulation logic.
+// Use the exported Navigator type alias instead of direct references.
+type navigator struct {
+	source idelve.ISource
 }
 
-func FromMap(source map[string]any) *Navigator {
-	return New(getterMap(source))
+// Source returns the underlying ISource implementation.
+// Useful for accessing low-level data source features not exposed by the Navigator interface.
+func (fm *navigator) Source() idelve.ISource {
+	return fm.source
 }
 
-func FromList(source []any) *Navigator {
-	return New(&getterList{source})
+// QGetRaw retrieves a raw value from the data source using a qualified path.
+// Returns the value and an existence flag. Prefer QGet for type-wrapped values.
+func (fm *navigator) QGetRaw(qual idelve.IQual) (any, bool) {
+	return fm.qualGet(qual)
 }
 
-type Navigator struct {
-	source ISource
+// QSet updates the data source at the specified qualified path with the given value.
+// Returns true if the operation succeeded. Fails if the path doesn't exist or is read-only.
+func (fm *navigator) QSet(qual idelve.IQual, value any) bool {
+	return fm.qualSet(qual, value)
 }
 
-func (fm *Navigator) Get(qual string) (any, bool) {
-	return fm.source.Get(qual)
+// Get retrieves a value using a string-qualified path with optional delimiter customization.
+// Default path delimiter is '.'. Returns a value.Value wrapper for type-safe operations.
+func (fm *navigator) Get(qual string, _delimiter ...rune) *value.Value {
+	return fm.QGet(quals.Q(qual, _delimiter...))
 }
 
-func (fm *Navigator) Set(qual string, value any) bool {
-	return fm.source.Set(qual, value)
+// QGet retrieves a qualified path value wrapped in a value.Value container.
+// Returns nil-value container if path doesn't exist.
+func (fm *navigator) QGet(qual idelve.IQual) *value.Value {
+	v, _ := fm.qualGet(qual)
+	return value.New(v)
 }
 
-// QualGet retrieves a nested value using a compiled qualifier
-func (fm *Navigator) QualGet(qual IQual) (any, bool) {
-	defer qual.Reset()
-
-	var currentGetter ISource = fm.source
-	if currentGetter == nil {
-		return nil, false
+// QGetNavigator retrieves a sub-navigator for a qualified path.
+// Useful for chaining operations on nested structures. Returns nil for nonexistent paths.
+func (fm *navigator) QGetNavigator(qual idelve.IQual) Navigator {
+	v, ok := fm.qualGet(qual)
+	if !ok {
+		return nil
 	}
-	var hasNext bool = true
-	var part string
-
-	for hasNext {
-		part, hasNext = qual.Next()
-		if !hasNext {
-			return currentGetter.Get(part)
-		}
-		if inner, ok := getInnerGetter(part, currentGetter); ok {
-			currentGetter = inner
-		} else {
-			return nil, false
-		}
+	if source := sources.GetSource(v); source != nil {
+		return &navigator{source: source}
+	} else {
+		return nil
 	}
-	return nil, false
 }
 
-func (fm *Navigator) QualSet(qual IQual, value any) bool {
-	var currentGetter = fm.source
-	if fm.source == nil {
-		return false
-	}
-	var hasNext bool = true
-	var part string
-
-	pathExist := true
-	for hasNext {
-		if !pathExist {
-			newGetter := getterMap{}
-			if !currentGetter.Set(part, newGetter) {
-				return false
-			}
-			currentGetter = newGetter
-			part, hasNext = qual.Next()
-			continue
-		}
-		part, hasNext = qual.Next()
-		if !hasNext {
-			break
-		}
-		if inner, ok := getInnerGetter(part, currentGetter); ok {
-			currentGetter = inner
-		} else {
-			pathExist = false
-		}
-	}
-
-	return currentGetter.Set(part, value)
+// GetNavigator retrieves a sub-navigator using string-qualified path.
+// Returns nil if path doesn't exist or points to non-navigable data.
+func (fm *navigator) GetNavigator(qual string, _delimiter ...rune) Navigator {
+	return fm.QGetNavigator(quals.Q(qual, _delimiter...))
 }
 
-// Returns value by qual or panics
-func (fm *Navigator) MustGetByQual(qual IQual) any {
-	if val, ok := fm.QualGet(qual); ok {
+// QMust retrieves a raw value with panic on missing path.
+// Use for mandatory value retrieval. Prefer QGet with existence checks for safer access.
+func (fm *navigator) QMust(qual idelve.IQual) any {
+	if val, ok := fm.QGetRaw(qual); ok {
 		return val
 	}
 	panic(fmt.Sprintf("could not get by qual %v", qual))
 }
 
-// getInnerGetter retrieves nested delve or FlexList values for further access
-func getInnerGetter(key string, from ISource) (ISource, bool) {
-	result, ok := from.Get(key)
-	if !ok {
-		return nil, false
-	}
-	switch typed := result.(type) {
-	case []any:
-		return &getterList{list: typed}, true
-	case map[string]any:
-		return getterMap(typed), true
-	case ISource:
-		return typed, true
-	default:
-		return nil, false
-	}
+// SetMapSource replaces the underlying data source with a new map.
+// Resets all navigation state. Prefer structural updates via QSet when possible.
+func (fm *navigator) SetMapSource(source map[string]any) {
+	fm.SetSource(sources.MapSource(source))
 }
 
-func (fm *Navigator) SetMapSource(source map[string]any) {
-	fm.SetSource(getterMap(source))
+// SetListSource replaces the underlying data source with a new slice.
+// Resets all navigation state. Useful for fundamentally changing data structure type.
+func (fm *navigator) SetListSource(source []any) {
+	fm.SetSource(sources.NewList(source))
 }
 
-func (fm *Navigator) SetListSource(source []any) {
-	fm.SetSource(&getterList{source})
-}
-
-func (fm *Navigator) SetSource(source ISource) {
+// SetSource replaces the underlying ISource implementation.
+// Allows switching between different data source types while preserving navigation logic.
+func (fm *navigator) SetSource(source idelve.ISource) {
 	fm.source = source
 }

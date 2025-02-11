@@ -1,3 +1,3 @@
-module github.com/vloldik/delve/v2
+module github.com/vloldik/delve/v3
 
 go 1.22.7

@@ -1,4 +1,9 @@
-package delve
+package quals
+
+import (
+	"github.com/vloldik/delve/v3/internal/defaultval"
+	"github.com/vloldik/delve/v3/pkg/idelve"
+)
 
 type stringQual struct {
 	_initQual string
@@ -6,7 +11,7 @@ type stringQual struct {
 	delimiter rune
 }
 
-func (sq *stringQual) Copy() IQual {
+func (sq *stringQual) Copy() idelve.IQual {
 	return &stringQual{
 		_initQual: sq._initQual,
 		qual:      sq.qual,
@@ -62,7 +67,7 @@ func (sq *stringQual) Reset() {
 
 // Creates an uncompiled qualifier, which is cheaper to create than a compiled one, but more expensive to reuse and depends on the length of the string.
 func Q(qual string, _delimiter ...rune) *stringQual {
-	delimiter := defaultVal(DefaultDelimiter, _delimiter)
+	delimiter := defaultval.WithDefaultVal(DefaultDelimiter, _delimiter)
 	if delimiter == '\\' {
 		panic(`delimiter can not be a "\"`)
 	}

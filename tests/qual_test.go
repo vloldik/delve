@@ -4,18 +4,19 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/vloldik/delve/v2"
+	"github.com/vloldik/delve/v3/internal/quals"
+	"github.com/vloldik/delve/v3/pkg/idelve"
 )
 
 func TestQualCompile(t *testing.T) {
 	testString := `a\.b.c\.c\\.d`
-	qual := delve.CQ(testString)
+	qual := quals.CQ(testString)
 	if qual.String() != testString {
 		t.Fatalf("String %s is not equals %s", qual.String(), testString)
 	}
 }
 
-func IQualTest(t *testing.T, qual delve.IQual, expectedParts []string) {
+func IQualTest(t *testing.T, qual idelve.IQual, expectedParts []string) {
 	realParts := []string{}
 	lastPart := ""
 	var hasNext bool = true
@@ -59,107 +60,107 @@ func IQualTest(t *testing.T, qual delve.IQual, expectedParts []string) {
 func TestStringQual(t *testing.T) {
 	qual := `a.b.c\.d.e\\.f\..`
 	expected := []string{"a", "b", "c.d", "e\\", "f."}
-	IQualTest(t, delve.Q(qual), expected)
+	IQualTest(t, quals.Q(qual), expected)
 }
 
 func TestCompiledQual(t *testing.T) {
 	qual := `a.b.c\.d.e\\.f\..`
 	expected := []string{"a", "b", "c.d", "e\\", "f."}
-	IQualTest(t, delve.CQ(qual), expected)
+	IQualTest(t, quals.CQ(qual), expected)
 }
 
 func TestStringQualEmpty(t *testing.T) {
 	qual := ""
 	expected := []string{""}
-	IQualTest(t, delve.Q(qual), expected)
+	IQualTest(t, quals.Q(qual), expected)
 }
 
 func TestCompiledQualEmpty(t *testing.T) {
 	qual := ""
 	expected := []string{""}
-	IQualTest(t, delve.CQ(qual), expected)
+	IQualTest(t, quals.CQ(qual), expected)
 }
 
 func TestStringQualOnlyDelimiters(t *testing.T) {
 	qual := "..."
 	expected := []string{"", "", ""}
-	IQualTest(t, delve.Q(qual), expected)
+	IQualTest(t, quals.Q(qual), expected)
 }
 
 func TestCompiledQualOnlyDelimiters(t *testing.T) {
 	qual := "..."
 	expected := []string{"", "", ""}
-	IQualTest(t, delve.CQ(qual), expected)
+	IQualTest(t, quals.CQ(qual), expected)
 }
 
 func TestStringQualEscapedDelimiterAtEnd(t *testing.T) {
 	qual := "a\\."
 	expected := []string{"a."}
-	IQualTest(t, delve.Q(qual), expected)
+	IQualTest(t, quals.Q(qual), expected)
 }
 
 func TestCompiledQualEscapedDelimiterAtEnd(t *testing.T) {
 	qual := "a\\."
 	expected := []string{"a."}
-	IQualTest(t, delve.CQ(qual), expected)
+	IQualTest(t, quals.CQ(qual), expected)
 }
 
 func TestStringQualEscapedBackslash(t *testing.T) {
 	qual := "a\\\\.b"
 	expected := []string{"a\\", "b"}
-	IQualTest(t, delve.Q(qual), expected)
+	IQualTest(t, quals.Q(qual), expected)
 }
 
 func TestCompiledQualEscapedBackslash(t *testing.T) {
 	qual := "a\\\\.b"
 	expected := []string{"a\\", "b"}
-	IQualTest(t, delve.CQ(qual), expected)
+	IQualTest(t, quals.CQ(qual), expected)
 }
 
 func TestStringQualMultipleEscapedDelimiters(t *testing.T) {
 	qual := `a\.b\.c`
 	expected := []string{"a.b.c"}
-	IQualTest(t, delve.Q(qual), expected)
+	IQualTest(t, quals.Q(qual), expected)
 }
 
 func TestCompiledQualMultipleEscapedDelimiters(t *testing.T) {
 	qual := `a\.b\.c`
 	expected := []string{"a.b.c"}
-	IQualTest(t, delve.CQ(qual), expected)
+	IQualTest(t, quals.CQ(qual), expected)
 }
 
 func TestStringQualMixedEscapedAndUnescaped(t *testing.T) {
 	qual := `a.b\.c.d\\.e`
 	expected := []string{"a", "b.c", "d\\", "e"}
-	IQualTest(t, delve.Q(qual), expected)
+	IQualTest(t, quals.Q(qual), expected)
 }
 
 func TestCompiledQualMixedEscapedAndUnescaped(t *testing.T) {
 	qual := `a.b\.c.d\\.e`
 	expected := []string{"a", "b.c", "d\\", "e"}
-	IQualTest(t, delve.CQ(qual), expected)
+	IQualTest(t, quals.CQ(qual), expected)
 }
 
 func TestStringQualLeadingAndTrailingDelimiters(t *testing.T) {
 	qual := `.a.b.`
 	expected := []string{"", "a", "b"}
-	IQualTest(t, delve.Q(qual), expected)
+	IQualTest(t, quals.Q(qual), expected)
 }
 
 func TestCompiledQualLeadingAndTrailingDelimiters(t *testing.T) {
 	qual := `.a.b.`
 	expected := []string{"", "a", "b"}
-	IQualTest(t, delve.CQ(qual), expected)
+	IQualTest(t, quals.CQ(qual), expected)
 }
 
 func TestStringQualConsecutiveEscapedBackslashes(t *testing.T) {
 	qual := "a\\\\\\\\.b"
 	expected := []string{"a\\\\", "b"}
-	IQualTest(t, delve.Q(qual), expected)
+	IQualTest(t, quals.Q(qual), expected)
 }
 
 func TestCompiledQualConsecutiveEscapedBackslashes(t *testing.T) {
 	qual := "a\\\\\\\\.b"
 	expected := []string{"a\\\\", "b"}
-	IQualTest(t, delve.CQ(qual), expected)
+	IQualTest(t, quals.CQ(qual), expected)
 }
