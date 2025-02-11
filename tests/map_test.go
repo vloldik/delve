@@ -69,7 +69,7 @@ func TestCustomDelemiter(m *testing.T) {
 		panic(err)
 	}
 	nav := delve.New(mMap)
-	if value, ok := nav.QualGet(quals.CQ("a/b/0/c", '/')); ok {
+	if value, ok := nav.QGetRaw(quals.CQ("a/b/0/c", '/')); ok {
 		if value.(float64) != 3.14 {
 			m.FailNow()
 		}

@@ -13,7 +13,7 @@ func BenchmarkSetValueInMap(b *testing.B) {
 	q := quals.CQ("key")
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		nav.QualSet(q, i)
+		nav.QSet(q, i)
 	}
 }
 
@@ -23,7 +23,7 @@ func BenchmarkOverwriteValueInMap(b *testing.B) {
 	q := quals.CQ("key")
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		nav.QualSet(q, i)
+		nav.QSet(q, i)
 	}
 }
 
@@ -37,7 +37,7 @@ func BenchmarkSetValueInList(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		nav.QualSet(q, i)
+		nav.QSet(q, i)
 	}
 }
 
@@ -47,7 +47,7 @@ func BenchmarkSetNestedValueInMap(b *testing.B) {
 	q := quals.CQ("a.b.c")
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		nav.QualSet(q, i)
+		nav.QSet(q, i)
 		nav.SetMapSource(map[string]any{})
 	}
 }
@@ -58,7 +58,7 @@ func BenchmarkAppendToList(b *testing.B) {
 	q := quals.CQ("+")
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		nav.QualSet(q, i)
+		nav.QSet(q, i)
 	}
 }
 
@@ -71,6 +71,6 @@ func BenchmarkSetNegativeIndexInList(b *testing.B) {
 	q := quals.CQ("-1")
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		nav.QualSet(q, i)
+		nav.QSet(q, i)
 	}
 }
