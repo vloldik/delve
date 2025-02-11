@@ -11,43 +11,59 @@ import (
 // Use the Get/QGet methods to obtain Value instances from a Navigator.
 type Value = value.Value
 
-// IterList iterates over a slice stored in a Value, providing type-safe access
-// to elements. Requires the Value to contain exactly []V, otherwise does nothing.
+// IterList provides a type-safe way to iterate over a slice contained within a `Value`.
+//
+// It requires the `Value` to hold a slice of type `[]V`. If the `Value` contains
+// any other type, the function does nothing.  The provided callback function
+// is invoked for each element in the slice, receiving the index and the
+// element value.
 //
 // Parameters:
-//   - val: Value containing the slice to iterate over
-//   - callback: Function receiving (index, value) pairs
+//   - val: A pointer to a `Value` instance containing the slice.
+//   - callback: A function that takes the index (int) and the element value (V) as arguments.
+//     It should return a boolean. The loop breaks if this boolean is true.
 //
 // Type constraints:
-//   - V: Must match the slice element type
+//   - V: The type of elements within the slice.  This type must match the actual
+//     slice element type contained in the `Value`.
 //
-// Example iterating a list of integers:
+// Example:
 //
-//	delve.IterList[int](myValue, func(i int, v int) {
-//	    fmt.Printf("Index %d: %d", i, v)
-//	})
-func IterList[V any](val *Value, callback func(int, V)) {
+//		delve.IterList(myValue, func(i int, v int) bool {
+//		    fmt.Printf("Index %d: %d\n", i, v)
+//	     	return false // continue
+//		})
+func IterList[V any](val *Value, callback func(int, V) bool) {
 	value.IterList(val, callback)
 }
 
-// IterMap iterates over a map stored in a Value, providing type-safe access
-// to key-value pairs. Requires the Value to contain exactly map[K]V where K is
-// comparable, otherwise does nothing.
+// IterMap provides a type-safe way to iterate over a map contained within a `Value`.
+//
+// It requires the Value to hold a map of type `map[K]V`. If the `Value`
+// contains any other type, the function does nothing.  The callback
+// function is invoked for each key-value pair in the map, receiving the key
+//
+//	and value.
 //
 // Parameters:
-//   - val: Value containing the map to iterate over
-//   - callback: Function receiving (key, value) pairs
+//   - val: A pointer to a `Value` instance containing the map.
+//   - callback: A function to be called for each key-value pair.  It takes
+//     the key (K) and value (V) as arguments. It should return a boolean.
+//     The loop breaks if this boolean is true.
 //
 // Type constraints:
-//   - K: Must be comparable and match map key type
-//   - V: Must match map value type
+//   - K: The type of the map keys. This must be a comparable type and match
+//     the actual map key type in the `Value`.
+//   - V: The type of the map values. This must match the actual map value
+//     type in the `Value`.
 //
-// Example iterating a string->int map:
+// Example:
 //
-//	delve.IterMap[string, int](myValue, func(k string, v int) {
-//	    fmt.Printf("Key %s: %d", k, v)
-//	})
-func IterMap[K comparable, V any](val *Value, callback func(K, V)) {
+//		delve.IterMap(myValue, func(k string, v int) bool {
+//		    fmt.Printf("Key %s: %d\n", k, v)
+//	     return false; // continue
+//		})
+func IterMap[K comparable, V any](val *Value, callback func(K, V) bool) {
 	value.IterMap(val, callback)
 }
 
