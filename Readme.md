@@ -261,6 +261,49 @@ func main() {
 *   **`QSet` Allocation:**  `QSet` *only* allocates memory when it needs to create new maps along the path or when appending to a list. If you're setting a value at a path that already exists, `QSet` will not allocate any new memory on the heap.  This makes Delve very efficient for modifying existing data structures. List appends cause an allocation due to boxing.
 *   Prefer direct struct \ map access when possible.
 
+## Performance Comparison (Get)
+
+### Basic Access
+
+| Method       | ns/op  | Allocs/op |
+| ------------ | ------ | --------- |
+| Direct map   | 4.27   | 0         |
+| Delve (CQ)   | 20.49  | 0         |
+
+### Variable Key Length (ns/op)
+
+| Key Length | CompiledQ | StringQ |
+| ---------- | --------- | ------- |
+| 2          | 21.84     | 31.95   |
+| 14         | 22.47     | 42.82   |
+| 506        | 30.38     | 372.4   |
+
+### Nested Depth (ns/op)
+
+| Depth | CompiledQ | StringQ |
+| ----- | --------- | ------- |
+| 1     | 14.08     | 16.14   |
+| 5     | 43.42     | 78.74   |
+| 10    | 85.05     | 164.2   |
+
+## Qualifier Creation Costs
+
+### By Key Length
+
+| Key Length | ns/op  | Allocs/op |
+| ---------- | ------ | --------- |
+| 2          | 117.8  | 4         |
+| 239        | 1032   | 8         |
+| 506        | 1926   | 9         |
+
+### By Nesting Depth
+
+| Depth | ns/op | Allocs/op |
+| ----- | ----- | --------- |
+| 1     | 81.88 | 3         |
+| 5     | 299.7 | 7         |
+| 10    | 565.5 | 12        |
+
 ## Error Handling
 Delve prioritizes type safety and offers multiple ways to handle potential errors:
 *   **`Value` Methods:** Type specific methods (e.g. `.Int()`,`.String()`) return the corresponding zero-value of the type, if the value cannot be converted.
