@@ -176,7 +176,7 @@ func main() {
 
  *   **`IterList[V any](val *Value, callback func(int, V))`:** Iterates a slice in a `Value`.
    
-    ```go
+     ```go
         mySlice := []int{1, 2, 3}
         nav := delve.New(map[string]any{"list_key":mySlice})
 
