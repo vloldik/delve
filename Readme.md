@@ -24,7 +24,7 @@ High-performance nested data navigation library for Go with zero allocations, ty
 ## Installation
 
 ```bash
-go get github.com/vloldik/delve/v2
+go get github.com/vloldik/delve/v3
 ```
 
 ## Quick Start
@@ -34,7 +34,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/vloldik/delve/v2"
+	"github.com/vloldik/delve/v3"
 )
 
 func main() {

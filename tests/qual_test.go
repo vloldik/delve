@@ -4,8 +4,8 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/vloldik/delve/v2/internal/quals"
-	"github.com/vloldik/delve/v2/pkg/idelve"
+	"github.com/vloldik/delve/v3/internal/quals"
+	"github.com/vloldik/delve/v3/pkg/idelve"
 )
 
 func TestQualCompile(t *testing.T) {

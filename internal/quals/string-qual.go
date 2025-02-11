@@ -1,8 +1,8 @@
 package quals
 
 import (
-	"github.com/vloldik/delve/v2/internal/defaultval"
-	"github.com/vloldik/delve/v2/pkg/idelve"
+	"github.com/vloldik/delve/v3/internal/defaultval"
+	"github.com/vloldik/delve/v3/pkg/idelve"
 )
 
 type stringQual struct {

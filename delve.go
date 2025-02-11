@@ -15,10 +15,10 @@ package delve
 import (
 	"fmt"
 
-	"github.com/vloldik/delve/v2/internal/quals"
-	"github.com/vloldik/delve/v2/internal/sources"
-	"github.com/vloldik/delve/v2/internal/value"
-	"github.com/vloldik/delve/v2/pkg/idelve"
+	"github.com/vloldik/delve/v3/internal/quals"
+	"github.com/vloldik/delve/v3/internal/sources"
+	"github.com/vloldik/delve/v3/internal/value"
+	"github.com/vloldik/delve/v3/pkg/idelve"
 )
 
 // Navigator represents a navigation interface into structured data.

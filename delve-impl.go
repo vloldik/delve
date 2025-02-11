@@ -1,8 +1,8 @@
 package delve
 
 import (
-	"github.com/vloldik/delve/v2/internal/sources"
-	"github.com/vloldik/delve/v2/pkg/idelve"
+	"github.com/vloldik/delve/v3/internal/sources"
+	"github.com/vloldik/delve/v3/pkg/idelve"
 )
 
 func (fm *navigator) qualGet(qual idelve.IQual) (any, bool) {

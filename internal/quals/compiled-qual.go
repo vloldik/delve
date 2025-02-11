@@ -3,8 +3,8 @@ package quals
 import (
 	"strings"
 
-	"github.com/vloldik/delve/v2/internal/defaultval"
-	"github.com/vloldik/delve/v2/pkg/idelve"
+	"github.com/vloldik/delve/v3/internal/defaultval"
+	"github.com/vloldik/delve/v3/pkg/idelve"
 )
 
 const DefaultDelimiter = '.' // Qdelimiter is used to separate nested keys in qualified paths

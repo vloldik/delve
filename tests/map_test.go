@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/vloldik/delve/v2"
-	"github.com/vloldik/delve/v2/internal/quals"
+	"github.com/vloldik/delve/v3"
+	"github.com/vloldik/delve/v3/internal/quals"
 )
 
 type mockSource struct{}

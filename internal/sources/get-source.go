@@ -1,6 +1,6 @@
 package sources
 
-import "github.com/vloldik/delve/v2/pkg/idelve"
+import "github.com/vloldik/delve/v3/pkg/idelve"
 
 func GetSource(unknown any) idelve.ISource {
 	switch typed := unknown.(type) {

@@ -1,9 +1,9 @@
 package delve
 
 import (
-	"github.com/vloldik/delve/v2/internal/quals"
-	"github.com/vloldik/delve/v2/internal/value"
-	"github.com/vloldik/delve/v2/pkg/idelve"
+	"github.com/vloldik/delve/v3/internal/quals"
+	"github.com/vloldik/delve/v3/internal/value"
+	"github.com/vloldik/delve/v3/pkg/idelve"
 )
 
 // Value represents a wrapped arbitrary value with type-safe access methods.

@@ -3,7 +3,7 @@ package value
 import (
 	"reflect"
 
-	"github.com/vloldik/delve/v2/internal/defaultval"
+	"github.com/vloldik/delve/v3/internal/defaultval"
 )
 
 type Value struct {
