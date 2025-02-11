@@ -1,4 +1,4 @@
-package interfaces
+package idelve
 
 // ISource defines an interface for navigator data source
 type ISource interface {

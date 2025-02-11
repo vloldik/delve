@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/vloldik/delve/v2/internal/quals"
-	"github.com/vloldik/delve/v2/pkg/interfaces"
+	"github.com/vloldik/delve/v2/pkg/idelve"
 )
 
 func TestQualCompile(t *testing.T) {
@@ -16,7 +16,7 @@ func TestQualCompile(t *testing.T) {
 	}
 }
 
-func IQualTest(t *testing.T, qual interfaces.IQual, expectedParts []string) {
+func IQualTest(t *testing.T, qual idelve.IQual, expectedParts []string) {
 	realParts := []string{}
 	lastPart := ""
 	var hasNext bool = true

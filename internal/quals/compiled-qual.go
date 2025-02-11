@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/vloldik/delve/v2/internal/defaultval"
-	"github.com/vloldik/delve/v2/pkg/interfaces"
+	"github.com/vloldik/delve/v2/pkg/idelve"
 )
 
 const DefaultDelimiter = '.' // Qdelimiter is used to separate nested keys in qualified paths
@@ -16,7 +16,7 @@ type compiledQual struct {
 	delimiter rune
 }
 
-func (c *compiledQual) Copy() interfaces.IQual {
+func (c *compiledQual) Copy() idelve.IQual {
 	return &compiledQual{
 		// No need to copy list, it's read-only
 		parts:     c.parts,

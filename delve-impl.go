@@ -2,13 +2,13 @@ package delve
 
 import (
 	"github.com/vloldik/delve/v2/internal/sources"
-	"github.com/vloldik/delve/v2/pkg/interfaces"
+	"github.com/vloldik/delve/v2/pkg/idelve"
 )
 
-func (fm *navigator) qualGet(qual interfaces.IQual) (any, bool) {
+func (fm *navigator) qualGet(qual idelve.IQual) (any, bool) {
 	defer qual.Reset()
 
-	var currentGetter interfaces.ISource = fm.source
+	var currentGetter idelve.ISource = fm.source
 	if currentGetter == nil {
 		return nil, false
 	}
@@ -29,7 +29,7 @@ func (fm *navigator) qualGet(qual interfaces.IQual) (any, bool) {
 	return nil, false
 }
 
-func (fm *navigator) qualSet(qual interfaces.IQual, value any) bool {
+func (fm *navigator) qualSet(qual idelve.IQual, value any) bool {
 	defer qual.Reset()
 
 	var currentGetter = fm.source
@@ -65,7 +65,7 @@ func (fm *navigator) qualSet(qual interfaces.IQual, value any) bool {
 }
 
 // getInnerGetter retrieves nested ISource for further access. Returns nil if not successed
-func getInnerGetter(key string, from interfaces.ISource) interfaces.ISource {
+func getInnerGetter(key string, from idelve.ISource) idelve.ISource {
 	result, ok := from.Get(key)
 	if !ok {
 		return nil

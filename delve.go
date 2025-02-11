@@ -18,7 +18,7 @@ import (
 	"github.com/vloldik/delve/v2/internal/quals"
 	"github.com/vloldik/delve/v2/internal/sources"
 	"github.com/vloldik/delve/v2/internal/value"
-	"github.com/vloldik/delve/v2/pkg/interfaces"
+	"github.com/vloldik/delve/v2/pkg/idelve"
 )
 
 // Navigator represents a navigation interface into structured data.
@@ -40,31 +40,31 @@ func New[T sourceType](source T) Navigator {
 
 // From creates a Navigator from an existing ISource implementation.
 // Allows integration with custom data sources that implement the ISource interface.
-func From(source interfaces.ISource) Navigator {
+func From(source idelve.ISource) Navigator {
 	return &navigator{source: source}
 }
 
 // navigator implements the core data navigation and manipulation logic.
 // Use the exported Navigator type alias instead of direct references.
 type navigator struct {
-	source interfaces.ISource
+	source idelve.ISource
 }
 
 // Source returns the underlying ISource implementation.
 // Useful for accessing low-level data source features not exposed by the Navigator interface.
-func (fm *navigator) Source() interfaces.ISource {
+func (fm *navigator) Source() idelve.ISource {
 	return fm.source
 }
 
 // QGetRaw retrieves a raw value from the data source using a qualified path.
 // Returns the value and an existence flag. Prefer QGet for type-wrapped values.
-func (fm *navigator) QGetRaw(qual interfaces.IQual) (any, bool) {
+func (fm *navigator) QGetRaw(qual idelve.IQual) (any, bool) {
 	return fm.qualGet(qual)
 }
 
 // QSet updates the data source at the specified qualified path with the given value.
 // Returns true if the operation succeeded. Fails if the path doesn't exist or is read-only.
-func (fm *navigator) QSet(qual interfaces.IQual, value any) bool {
+func (fm *navigator) QSet(qual idelve.IQual, value any) bool {
 	return fm.qualSet(qual, value)
 }
 
@@ -76,14 +76,14 @@ func (fm *navigator) Get(qual string, _delimiter ...rune) *value.Value {
 
 // QGet retrieves a qualified path value wrapped in a value.Value container.
 // Returns nil-value container if path doesn't exist.
-func (fm *navigator) QGet(qual interfaces.IQual) *value.Value {
+func (fm *navigator) QGet(qual idelve.IQual) *value.Value {
 	v, _ := fm.qualGet(qual)
 	return value.New(v)
 }
 
 // QGetNavigator retrieves a sub-navigator for a qualified path.
 // Useful for chaining operations on nested structures. Returns nil for nonexistent paths.
-func (fm *navigator) QGetNavigator(qual interfaces.IQual) Navigator {
+func (fm *navigator) QGetNavigator(qual idelve.IQual) Navigator {
 	v, ok := fm.qualGet(qual)
 	if !ok {
 		return nil
@@ -103,7 +103,7 @@ func (fm *navigator) GetNavigator(qual string, _delimiter ...rune) Navigator {
 
 // QMust retrieves a raw value with panic on missing path.
 // Use for mandatory value retrieval. Prefer QGet with existence checks for safer access.
-func (fm *navigator) QMust(qual interfaces.IQual) any {
+func (fm *navigator) QMust(qual idelve.IQual) any {
 	if val, ok := fm.QGetRaw(qual); ok {
 		return val
 	}
@@ -124,6 +124,6 @@ func (fm *navigator) SetListSource(source []any) {
 
 // SetSource replaces the underlying ISource implementation.
 // Allows switching between different data source types while preserving navigation logic.
-func (fm *navigator) SetSource(source interfaces.ISource) {
+func (fm *navigator) SetSource(source idelve.ISource) {
 	fm.source = source
 }

@@ -3,7 +3,7 @@ package delve
 import (
 	"github.com/vloldik/delve/v2/internal/quals"
 	"github.com/vloldik/delve/v2/internal/value"
-	"github.com/vloldik/delve/v2/pkg/interfaces"
+	"github.com/vloldik/delve/v2/pkg/idelve"
 )
 
 // Value represents a wrapped arbitrary value with type-safe access methods.
@@ -61,7 +61,7 @@ func IterMap[K comparable, V any](val *Value, callback func(K, V)) {
 //
 //	qual := delve.Q("user.address.street")
 //	street := navigator.QGet(qual)
-func Q(qual string, _delimiter ...rune) interfaces.IQual {
+func Q(qual string, _delimiter ...rune) idelve.IQual {
 	return quals.Q(qual, _delimiter...)
 }
 
@@ -77,6 +77,6 @@ func Q(qual string, _delimiter ...rune) interfaces.IQual {
 //
 //	var userStreetQual = delve.CQ("user.address.street")
 //	street := navigator.QGet(userStreetQual)
-func CQ(qual string, _delimiter ...rune) interfaces.IQual {
+func CQ(qual string, _delimiter ...rune) idelve.IQual {
 	return quals.CQ(qual, _delimiter...)
 }

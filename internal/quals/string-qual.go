@@ -2,7 +2,7 @@ package quals
 
 import (
 	"github.com/vloldik/delve/v2/internal/defaultval"
-	"github.com/vloldik/delve/v2/pkg/interfaces"
+	"github.com/vloldik/delve/v2/pkg/idelve"
 )
 
 type stringQual struct {
@@ -11,7 +11,7 @@ type stringQual struct {
 	delimiter rune
 }
 
-func (sq *stringQual) Copy() interfaces.IQual {
+func (sq *stringQual) Copy() idelve.IQual {
 	return &stringQual{
 		_initQual: sq._initQual,
 		qual:      sq.qual,
