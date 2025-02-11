@@ -2,136 +2,82 @@ package delve
 
 import (
 	"fmt"
+
+	"github.com/vloldik/delve/v2/internal/quals"
+	"github.com/vloldik/delve/v2/internal/sources"
+	"github.com/vloldik/delve/v2/internal/value"
+	"github.com/vloldik/delve/v2/pkg/interfaces"
 )
 
-// Interface represents qualifier to access fields of navigator
-type IQual interface {
-	// Function to access next part of qualifier
-	Next() (string, bool)
-	// Function to reset qualifier back to zero offset start state.
-	Reset()
-	// Function to get an independent copy of current qual
-	Copy() IQual
+type Navigator = *navigator
+
+type sourceType interface{ map[string]any | []any }
+
+func New[T sourceType](source T) Navigator {
+	return &navigator{source: sources.GetSource(source)}
 }
 
-// ISource defines an interface for navigator data source
-type ISource interface {
-	Get(string) (any, bool)
-	Set(string, any) bool
+func From(source interfaces.ISource) Navigator {
+	return &navigator{source: source}
 }
 
-func New(source ISource) *Navigator {
-	return &Navigator{source: source}
+type navigator struct {
+	source interfaces.ISource
 }
 
-func FromMap(source map[string]any) *Navigator {
-	return New(getterMap(source))
-}
-
-func FromList(source []any) *Navigator {
-	return New(&getterList{source})
-}
-
-type Navigator struct {
-	source ISource
-}
-
-func (fm *Navigator) Source() ISource {
+func (fm *navigator) Source() interfaces.ISource {
 	return fm.source
 }
 
-// QualGet retrieves a nested value using a compiled qualifier
-func (fm *Navigator) QualGet(qual IQual) (any, bool) {
-	defer qual.Reset()
-
-	var currentGetter ISource = fm.source
-	if currentGetter == nil {
-		return nil, false
-	}
-	var hasNext bool = true
-	var part string
-
-	for hasNext {
-		part, hasNext = qual.Next()
-		if !hasNext {
-			return currentGetter.Get(part)
-		}
-		if inner, ok := getInnerGetter(part, currentGetter); ok {
-			currentGetter = inner
-		} else {
-			return nil, false
-		}
-	}
-	return nil, false
+func (fm *navigator) QualGet(qual interfaces.IQual) (any, bool) {
+	return fm.qualGet(qual)
 }
 
-func (fm *Navigator) QualSet(qual IQual, value any) bool {
-	var currentGetter = fm.source
-	if fm.source == nil {
-		return false
-	}
-	var hasNext bool = true
-	var part string
+func (fm *navigator) QualSet(qual interfaces.IQual, value any) bool {
+	return fm.qualSet(qual, value)
+}
 
-	pathExist := true
-	for hasNext {
-		if !pathExist {
-			newGetter := getterMap{}
-			if !currentGetter.Set(part, newGetter) {
-				return false
-			}
-			currentGetter = newGetter
-			part, hasNext = qual.Next()
-			continue
-		}
-		part, hasNext = qual.Next()
-		if !hasNext {
-			break
-		}
-		if inner, ok := getInnerGetter(part, currentGetter); ok {
-			currentGetter = inner
-		} else {
-			pathExist = false
-		}
-	}
+func (fm *navigator) Get(qual string, _delimiter ...rune) *value.Value {
+	return fm.QGet(quals.Q(qual, _delimiter...))
+}
 
-	return currentGetter.Set(part, value)
+func (fm *navigator) QGet(qual interfaces.IQual) *value.Value {
+	v, _ := fm.qualGet(qual)
+	return value.New(v)
+}
+
+func (fm *navigator) QGetNavigator(qual interfaces.IQual) Navigator {
+	v, ok := fm.qualGet(qual)
+	if !ok {
+		return nil
+	}
+	if source := sources.GetSource(v); source != nil {
+		return &navigator{source: source}
+	} else {
+		return nil
+	}
+}
+
+func (fm *navigator) GetNavigator(qual string, _delimiter ...rune) Navigator {
+	return fm.QGetNavigator(quals.Q(qual, _delimiter...))
 }
 
 // Returns value by qual or panics
-func (fm *Navigator) MustGetByQual(qual IQual) any {
+func (fm *navigator) MustGetByQual(qual interfaces.IQual) any {
 	if val, ok := fm.QualGet(qual); ok {
 		return val
 	}
 	panic(fmt.Sprintf("could not get by qual %v", qual))
 }
 
-// getInnerGetter retrieves nested delve or FlexList values for further access
-func getInnerGetter(key string, from ISource) (ISource, bool) {
-	result, ok := from.Get(key)
-	if !ok {
-		return nil, false
-	}
-	switch typed := result.(type) {
-	case []any:
-		return &getterList{list: typed}, true
-	case map[string]any:
-		return getterMap(typed), true
-	case ISource:
-		return typed, true
-	default:
-		return nil, false
-	}
+func (fm *navigator) SetMapSource(source map[string]any) {
+	fm.SetSource(sources.MapSource(source))
 }
 
-func (fm *Navigator) SetMapSource(source map[string]any) {
-	fm.SetSource(getterMap(source))
+func (fm *navigator) SetListSource(source []any) {
+	fm.SetSource(sources.NewList(source))
 }
 
-func (fm *Navigator) SetListSource(source []any) {
-	fm.SetSource(&getterList{source})
-}
-
-func (fm *Navigator) SetSource(source ISource) {
+func (fm *navigator) SetSource(source interfaces.ISource) {
 	fm.source = source
 }

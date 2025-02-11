@@ -46,52 +46,52 @@ func main() {
 		},
 	}
 
-	nav := delve.FromMap(data)
+	nav := delve.New(data)
 
 	// Compiled path access
-	userID := nav.Int(delve.CQ("user.id")) // 123
+	userID := nav.Int(quals.CQ("user.id")) // 123
 
 	// Dynamic path handling
 	roleIndex := 0
-	firstRole := nav.String(delve.Q(fmt.Sprintf("user.roles.%d", roleIndex))) // "admin"
+	firstRole := nav.String(quals.Q(fmt.Sprintf("user.roles.%d", roleIndex))) // "admin"
 
 	// Nested navigation
-	subNav := nav.Navigator(delve.CQ("user"))
-	userName := subNav.String(delve.CQ("name")) // "John Doe"
+	subNav := nav.Navigator(quals.CQ("user"))
+	userName := subNav.String(quals.CQ("name")) // "John Doe"
 
 	// Mutating the data:  Change the user's name.
-	nav.QualSet(delve.CQ("user.name"), "Jane Smith")
-	fmt.Println(nav.String(delve.CQ("user.name"))) // Output: Jane Smith
+	nav.QualSet(quals.CQ("user.name"), "Jane Smith")
+	fmt.Println(nav.String(quals.CQ("user.name"))) // Output: Jane Smith
 
 	// Append a role to the user's roles:
-	nav.QualSet(delve.CQ("user.roles.+"), "viewer")
-	fmt.Println(nav.String(delve.CQ("user.roles.2"))) // Output: viewer
+	nav.QualSet(quals.CQ("user.roles.+"), "viewer")
+	fmt.Println(nav.String(quals.CQ("user.roles.2"))) // Output: viewer
 
 	// Mutating with a list
 	listData := []any{
 		map[string]any{"id": 1},
 		map[string]any{"id": 2},
 	}
-	listNav := delve.FromList(listData)
+	listNav := delve.New(listData)
 
 	// Changing a value deep within a nested structure
-	listNav.QualSet(delve.CQ("0.id"), 5)
-	fmt.Println(listNav.Int(delve.CQ("0.id"))) // Output: 5
+	listNav.QualSet(quals.CQ("0.id"), 5)
+	fmt.Println(listNav.Int(quals.CQ("0.id"))) // Output: 5
 
 	// Using negative indexing to update the last elements id to 10
-	listNav.QualSet(delve.CQ("-1.id"), 10)
-	fmt.Println(listNav.Int(delve.CQ("-1.id"))) // Output: 10
+	listNav.QualSet(quals.CQ("-1.id"), 10)
+	fmt.Println(listNav.Int(quals.CQ("-1.id"))) // Output: 10
 
     // Using Interface() to get the raw value of roles
-    roles := nav.Interface(delve.CQ("user.roles"))
+    roles := nav.Interface(quals.CQ("user.roles"))
     fmt.Printf("Roles (raw): %v\n", roles)
 
     //Using SafeInterface() to get user object with default value as empty map
-    safeUser := nav.SafeInterface(delve.CQ("user.dog"), map[string]any{})
+    safeUser := nav.SafeInterface(quals.CQ("user.dog"), map[string]any{})
     fmt.Printf("Safe User: %#v", safeUser)
 
     // Getting length of roles by Len() method
-    rolesLen := nav.Len(delve.CQ("user.roles"))
+    rolesLen := nav.Len(quals.CQ("user.roles"))
     fmt.Printf("Roles length is %d\n", rolesLen)
 }
 ```
@@ -107,27 +107,27 @@ data := map[string]any{
 	},
 }
 
-nav.Int(delve.CQ(`a\.b.c\.d`))  // 42
+nav.Int(quals.CQ(`a\.b.c\.d`))  // 42
 ```
 
 ### Custom Delimiters
 
 ```go
 // Unix-style paths
-value := nav.Int(delve.CQ("a/b/c/d", '/'))
+value := nav.Int(quals.CQ("a/b/c/d", '/'))
 
 // Mixed delimiters
-nav.Int(delve.CQ("first:second:third", ':'))
+nav.Int(quals.CQ("first:second:third", ':'))
 ```
 
 ### Slice Navigation
 
 ```go
 // Negative indexes for reverse access
-lastItem := nav.String(delve.CQ("results.-1"))
+lastItem := nav.String(quals.CQ("results.-1"))
 
 // Multi-dimensional arrays
-matrixValue := nav.Float64(delve.CQ("matrix.3.14"))
+matrixValue := nav.Float64(quals.CQ("matrix.3.14"))
 ```
 
 ## Core API
@@ -136,25 +136,25 @@ matrixValue := nav.Float64(delve.CQ("matrix.3.14"))
 
 ```go
 // Safe access with defaults
-timeout := nav.Int(delve.CQ("config.timeout"), 30)
+timeout := nav.Int(quals.CQ("config.timeout"), 30)
 
 // Type-specific methods
-isActive := nav.Bool(delve.CQ("user.active"), false)
-ratio := nav.Float32(delve.CQ("metrics.ratio"))
+isActive := nav.Bool(quals.CQ("user.active"), false)
+ratio := nav.Float32(quals.CQ("metrics.ratio"))
 
 // Mandatory values
-criticalID := nav.MustGetByQual(delve.CQ("system.id"))
+criticalID := nav.MustGetByQual(quals.CQ("system.id"))
 ```
 
 ### Navigation Control
 
 ```go
 // Direct nested access
-subNav := nav.Navigator(delve.CQ("user.profile"))
-email := subNav.String(delve.CQ("contact.email"))
+subNav := nav.Navigator(quals.CQ("user.profile"))
+email := subNav.String(quals.CQ("contact.email"))
 
 // Map value check
-if val, exists := nav.GetByQual(delve.CQ("optional.path")); exists {
+if val, exists := nav.GetByQual(quals.CQ("optional.path")); exists {
 	// Handle value
 }
 ```
@@ -163,26 +163,26 @@ if val, exists := nav.GetByQual(delve.CQ("optional.path")); exists {
 
 ```go
 // Set a value deep within a nested structure
-nav.QualSet(delve.CQ("user.profile.address.city"), "New York")
+nav.QualSet(quals.CQ("user.profile.address.city"), "New York")
 
 // Overwrite an existing value
-nav.QualSet(delve.CQ("user.id"), 456)
+nav.QualSet(quals.CQ("user.id"), 456)
 
 // Append to a list
-nav.QualSet(delve.CQ("items.+"), "new_item")
+nav.QualSet(quals.CQ("items.+"), "new_item")
 
 // Modify an element in a list using a negative index
-nav.QualSet(delve.CQ("items.-1"), "updated_item")
+nav.QualSet(quals.CQ("items.-1"), "updated_item")
 
 // Create non existed maps in path
 initialMap := map[string]any{"a": 1} // 'b' key is absent initially
-delveNav := delve.FromMap(initialMap)
+delveNav := delve.New(initialMap)
 // Attempting to access a non-existent path returns nil
-if delveNav.Navigator(delve.CQ("b")) == nil {
+if delveNav.Navigator(quals.CQ("b")) == nil {
 	fmt.Println("b is nil initially") // Output b is nil initially
 }
 // Set operation creates the necessary intermediate maps automatically.
-delveNav.QualSet(delve.CQ("b.nestedValue"), 42)
+delveNav.QualSet(quals.CQ("b.nestedValue"), 42)
 // You can see that 'b' is new map created
 fmt.Printf("b is %#v\n", delveNav.Get("b")) // Output b map[string]interface {}{"nestedValue":42}
 ```
@@ -191,25 +191,25 @@ fmt.Printf("b is %#v\n", delveNav.Get("b")) // Output b map[string]interface {}{
 
 These methods provide access to the underlying `any` value at a given path.
 
-- **`Interface(qual IQual) any`**:  Returns the raw `any` value.  If the path does not exist or any intermediate node is of the wrong type, it returns `nil`.  This is the *unsafe* version because it's up to the caller to perform type assertions.
+- **`Interface(interfaces.IQual) any`**:  Returns the raw `any` value.  If the path does not exist or any intermediate node is of the wrong type, it returns `nil`.  This is the *unsafe* version because it's up to the caller to perform type assertions.
 
-- **`SafeInterface(qual IQual, defaultValue any) any`**:  Returns the `any` value, but *only* if it's the correct type (or nil). If the value at the path exists but is not of the expected type, `defaultValue` is returned.  If the path does not exist, `defaultValue` is returned.  This is the *safe* version, as it performs type checking before returning.
+- **`SafeInterface(interfaces.IQual, defaultValue any) any`**:  Returns the `any` value, but *only* if it's the correct type (or nil). If the value at the path exists but is not of the expected type, `defaultValue` is returned.  If the path does not exist, `defaultValue` is returned.  This is the *safe* version, as it performs type checking before returning.
 
 ```go
 // Unsafe access - requires type assertion (and possible panic)
-rawValue := nav.Interface(delve.CQ("user.roles"))
+rawValue := nav.Interface(quals.CQ("user.roles"))
 rolesArray, ok := rawValue.([]any)
 if ok {
     fmt.Println(rolesArray)
 }
 
 // Much Safer:  Provides []any{} as a default if the path/type is wrong.
-safeValue := nav.SafeInterface(delve.CQ("user.roles"), []any{}).([]any{}) // Will not panic even if user.roles is not []any
+safeValue := nav.SafeInterface(quals.CQ("user.roles"), []any{}).([]any{}) // Will not panic even if user.roles is not []any
 
-safeMap := nav.SafeInterface(delve.CQ("wrong.path", map[string]any{"a": 1})) //will return a map[string]any always
+safeMap := nav.SafeInterface(quals.CQ("wrong.path", map[string]any{"a": 1})) //will return a map[string]any always
 ```
 
-### `Len(qual IQual) int`
+### `Len(interfaces.IQual) int`
 
 Retrieves the length of a value at a given path. The behavior depends on the underlying type:
 
@@ -219,10 +219,10 @@ Retrieves the length of a value at a given path. The behavior depends on the und
 -    **Other Types:** Returns -1
 
 ```go
-stringLen := nav.Len(delve.CQ("user.name")) // Length of the name string
-rolesLen := nav.Len(delve.CQ("user.roles")) // Number of roles
-invalidLen := nav.Len(delve.CQ("user.id"))    // Returns -1 (int is not countable)
-notExistLen := nav.Len(delve.CQ("not.exists.path")) // Returns -1
+stringLen := nav.Len(quals.CQ("user.name")) // Length of the name string
+rolesLen := nav.Len(quals.CQ("user.roles")) // Number of roles
+invalidLen := nav.Len(quals.CQ("user.id"))    // Returns -1 (int is not countable)
+notExistLen := nav.Len(quals.CQ("not.exists.path")) // Returns -1
 ```
 
 ## Qualifiers Explained
@@ -231,13 +231,13 @@ notExistLen := nav.Len(delve.CQ("not.exists.path")) // Returns -1
 
 ```go
 // Precompile static paths
-userQual := delve.CQ("user.meta")
+userQual := quals.CQ("user.meta")
 name := nav.String(userQual.Copy().String())
 
 // Cache frequently used paths
 var (
-	qualCartTotal = delve.CQ("cart.totals.grand")
-	qualInventory = delve.CQ("warehouse.stock.-1")
+	qualCartTotal = quals.CQ("cart.totals.grand")
+	qualInventory = quals.CQ("warehouse.stock.-1")
 )
 
 total := nav.Float64(qualCartTotal)
@@ -249,12 +249,12 @@ lastStock := nav.Int(qualInventory)
 ```go
 // Dynamic path construction
 buildPath := func(region string) delve.IQual {
-	return delve.Q(fmt.Sprintf("metrics.regions.%s.active", region))
+	return quals.Q(fmt.Sprintf("metrics.regions.%s.active", region))
 }
 
 // Runtime configuration
 delimiter := getRuntimeDelimiter()
-value := nav.Int(delve.Q("path/with/custom/delimiter", delimiter))
+value := nav.Int(quals.Q("path/with/custom/delimiter", delimiter))
 ```
 
 ## Benchmark Results
@@ -321,7 +321,7 @@ Key insights from performance tests:
 
 ## Set Benchmarks
 
-These benchmarks compare various scenarios of setting values within nested data structures using `delve.QualSet`.
+These benchmarks compare various scenarios of setting values within nested data structures using `quals.QualSet`.
 
 | Benchmark                     | ns/op | Allocs/op |
 | ----------------------------- | ----- | --------- |
@@ -341,14 +341,14 @@ These benchmarks compare various scenarios of setting values within nested data 
 
 ## Optimization Guide
 
-1.  **Prefer CQ over Q:**  Use compiled qualifiers (`delve.CQ`) for static paths, especially in frequently executed code.  String qualifiers (`delve.Q`) are better for dynamically constructed paths.
+1.  **Prefer CQ over Q:**  Use compiled qualifiers (`quals.CQ`) for static paths, especially in frequently executed code.  String qualifiers (`quals.Q`) are better for dynamically constructed paths.
 
 2.  **Cache Navigators:** If you need to access multiple values within the *same* nested section, create a `Navigator` once and reuse it:
 
     ```go
-    userNav := nav.Navigator(delve.CQ("user"))
-    name := userNav.String(delve.CQ("name"))
-    id := userNav.Int(delve.CQ("id"))
+    userNav := nav.Navigator(quals.CQ("user"))
+    name := userNav.String(quals.CQ("name"))
+    id := userNav.Int(quals.CQ("id"))
     ```
 
 3.  **Avoid Qualifier Creation in Loops:** Creating qualifiers (especially `CQ`) has a cost.  Do it *outside* of loops:
@@ -356,20 +356,20 @@ These benchmarks compare various scenarios of setting values within nested data 
     ```go
     // BAD:  Recompiles the qualifier on every iteration
     for i := 0; i < len(myArray); i++ {
-        value := nav.Int(delve.CQ(fmt.Sprintf("data.%d.value", i)))
+        value := nav.Int(quals.CQ(fmt.Sprintf("data.%d.value", i)))
     }
 
     // GOOD:  Pre-compile the base, and copy/extend inside the loop.
-    baseQual := delve.CQ("data")
+    baseQual := quals.CQ("data")
     for i := 0; i < len(myArray); i++ {
         value := nav.Int(baseQual.Copy().String() + fmt.Sprintf(".%d.value", i))
     }
 
      // Better:  If the structure is regular use a list
-	dataNav := nav.Navigator(delve.CQ("data"))              // Get 'data' navigator
-	qualValue := delve.CQ("value") // Pre-compile ".value"
+	dataNav := nav.Navigator(quals.CQ("data"))              // Get 'data' navigator
+	qualValue := quals.CQ("value") // Pre-compile ".value"
 	for i := 0; i < len(myArray); i++ {
-	    value := dataNav.Navigator(delve.Q(strconv.Itoa(i))).Int(qualValue) // Access each element and its ".value"
+	    value := dataNav.Navigator(quals.Q(strconv.Itoa(i))).Int(qualValue) // Access each element and its ".value"
 	}
     // Ideal:
     // for _, elem := range myArray {
@@ -388,8 +388,8 @@ These benchmarks compare various scenarios of setting values within nested data 
 ```go
 // Optimal pattern
 var (
-	qualUser = delve.CQ("user")
-	qualName = delve.CQ("name")
+	qualUser = quals.CQ("user")
+	qualName = quals.CQ("name")
 )
 
 func getUserName(nav *delve.Navigator) string {

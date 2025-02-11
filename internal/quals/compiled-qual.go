@@ -1,7 +1,10 @@
-package delve
+package quals
 
 import (
 	"strings"
+
+	"github.com/vloldik/delve/v2/internal/defaultval"
+	"github.com/vloldik/delve/v2/pkg/interfaces"
 )
 
 const DefaultDelimiter = '.' // Qdelimiter is used to separate nested keys in qualified paths
@@ -13,7 +16,7 @@ type compiledQual struct {
 	delimiter rune
 }
 
-func (c *compiledQual) Copy() IQual {
+func (c *compiledQual) Copy() interfaces.IQual {
 	return &compiledQual{
 		// No need to copy list, it's read-only
 		parts:     c.parts,
@@ -71,7 +74,7 @@ func (c *compiledQual) String() string {
 
 // Creates a compiled qual, which is more efficient for reuse, but has a higher creation cost than string qual.
 func CQ(qual string, _delimiter ...rune) *compiledQual {
-	delimiter := defaultVal(DefaultDelimiter, _delimiter)
+	delimiter := defaultval.WithDefaultVal(DefaultDelimiter, _delimiter)
 	if delimiter == '\\' {
 		panic(`delimiter can not be a "\"`)
 	}

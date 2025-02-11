@@ -1,24 +1,16 @@
-package delve
+package sources
 
 import "strconv"
 
-type getterMap map[string]any
-type getterList struct {
+type ListSource struct {
 	list []any
 }
 
-// Get retrieves a value from delve by key
-func (fm getterMap) Get(key string) (any, bool) {
-	value, ok := fm[key]
-	return value, ok
+func NewList(list []any) *ListSource {
+	return &ListSource{list: list}
 }
 
-func (fm getterMap) Set(key string, val any) bool {
-	fm[key] = val
-	return true
-}
-
-func (fl *getterList) parseIndex(stringIndex string) (int, bool) {
+func (fl *ListSource) parseIndex(stringIndex string) (int, bool) {
 	key, err := strconv.Atoi(stringIndex)
 	if err != nil {
 		return -1, false
@@ -33,7 +25,7 @@ func (fl *getterList) parseIndex(stringIndex string) (int, bool) {
 }
 
 // Get retrieves a value from FlexList by index (passed as string)
-func (fl *getterList) Get(uncasted string) (any, bool) {
+func (fl *ListSource) Get(uncasted string) (any, bool) {
 	if index, ok := fl.parseIndex(uncasted); ok {
 		return fl.list[index], true
 	} else {
@@ -41,7 +33,7 @@ func (fl *getterList) Get(uncasted string) (any, bool) {
 	}
 }
 
-func (fl *getterList) Set(uncasted string, val any) bool {
+func (fl *ListSource) Set(uncasted string, val any) bool {
 	if uncasted == "+" {
 		fl.list = append(fl.list, val)
 		return true
